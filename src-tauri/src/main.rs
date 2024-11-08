@@ -28,6 +28,22 @@ fn main() {
             CREATE INDEX id_index ON messages (id);
             CREATE VIRTUAL TABLE messages_fts USING fts5(message, content='messages', content_rowid='id');
 
+            -- Trigger for INSERT
+            CREATE TRIGGER messages_ai AFTER INSERT ON messages BEGIN
+                INSERT INTO messages_fts(rowid, message) VALUES (new.rowid, new.message);
+            END;
+
+            -- Trigger for DELETE
+            CREATE TRIGGER messages_ad AFTER DELETE ON messages BEGIN
+                INSERT INTO messages_fts(messages_fts, rowid, message) VALUES('delete', old.rowid, old.message);
+            END;
+
+            -- Trigger for UPDATE
+            CREATE TRIGGER messages_au AFTER UPDATE ON messages BEGIN
+                INSERT INTO messages_fts(messages_fts, rowid, message) VALUES('delete', old.rowid, old.message);
+                INSERT INTO messages_fts(rowid, message) VALUES (new.rowid, new.message);
+            END;
+
             CREATE TABLE IF NOT EXISTS providers (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,

@@ -37,8 +37,19 @@ const mostRecentMessageInTree = (messages: ChatMessage[]) => {
 
 const getSearchResults = async (query: string) => {
   return (await db.select(
-    `SELECT * FROM messages_fts WHERE messages_fts MATCH '${query}'`
-  )) as ChatMessage[];
+    `SELECT
+      messages.*,
+      snippet(messages_fts, 0, '<b>', '</b>', '...', 10) as snippet
+    FROM
+      messages
+    JOIN
+      messages_fts ON messages.rowid = messages_fts.rowid
+    WHERE
+      messages_fts MATCH '${query}'
+    ORDER BY
+      rank
+    LIMIT 50`
+  )) as (ChatMessage & { snippet: string })[];
 };
 
 type SearchbarProps = {
@@ -84,7 +95,9 @@ const Link = ({ onOpen, onDelete, label }: LinkProps) => (
     href="#"
     onClick={onOpen}
   >
-    <span className="p-4 leading-none truncate">{label}</span>
+    <span className="p-4 leading-none truncate"
+      dangerouslySetInnerHTML={{ __html: label }}
+    />
     {/* delete button */}
     <button
       className="w-8 min-w-8 h-8 mr-1 ml-auto text-slate-500 hover:bg-red-300 items-center justify-center rounded group-hover:flex hover:text-white active:scale-95 active:bg-red-400 hidden"
@@ -107,11 +120,15 @@ export const SecondarySidebar = () => {
   const [searchResults, setSearchResults] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
-    console.log("query", query);
     if (query) {
       getSearchResults(query).then((r) => {
-        console.log("search results", r);
-        setSearchResults(r);
+        const mappedMessages = r.map(({ snippet, ...m }) => {
+          return {
+            ...m,
+            message: snippet,
+          };
+        });
+        setSearchResults(mappedMessages);
       });
     } else {
       setSearchResults([]);

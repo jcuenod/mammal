@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { getAll, ProviderWithModels } from "../state/modelProviders";
+import { useContext, useEffect, useState } from "react";
+import { ModelProviderContext } from "../state/modelProviderContext";
 
 type MenuOption = {
+  id: number;
   label: string;
   onClick: () => void;
 };
@@ -26,6 +27,7 @@ const Dropdown = ({ selectedOptionIndex, menuOptions }: DropdownProps) => {
     <div className="relative mx-2 text-sm group">
       <button
         onClick={() => setIsOpen(!isOpen)}
+        // we need setTimeout here to allow the event to fire on the submenu
         onBlur={() => setTimeout(() => setIsOpen(false), 300)}
         className="flex items-center h-10 px-4 rounded hover:bg-slate-300 active:bg-slate-400"
       >
@@ -42,7 +44,7 @@ const Dropdown = ({ selectedOptionIndex, menuOptions }: DropdownProps) => {
       >
         {menuOptions.map((option) => (
           <MenuOption
-            key={option.label}
+            key={option.label + "_" + option.id}
             {...option}
             onClick={() => {
               setIsOpen(false);
@@ -102,13 +104,10 @@ export const Navbar = ({
   selectProvider,
   selectModel,
 }: NavbarProps) => {
-  const [providers, setProviders] = useState<ProviderWithModels[]>([]);
-
-  useEffect(() => {
-    getAll().then((providers) => setProviders(providers));
-  }, []);
+  const { providers } = useContext(ModelProviderContext);
 
   const providerOptions = providers.map((provider) => ({
+    id: provider.id,
     label: provider.name,
     onClick: () => {
       selectProvider(provider.id);
@@ -118,6 +117,7 @@ export const Navbar = ({
   const modelOptions = providers
     .find((p) => p.id === selectedProviderId)
     ?.models.map((model) => ({
+      id: model.id,
       label: model.name,
       onClick: () => {
         selectModel(model.id);
@@ -134,13 +134,56 @@ export const Navbar = ({
 
   useEffect(() => {
     if (providers.length === 0) return;
-    if (selectedProviderIndex === -1) {
-      selectProvider(providers[0].id);
-      selectModel(providers[0].models[0].id);
-    } else if (selectedModelIndex === -1) {
-      selectModel(providers[selectedProviderIndex].models[0].id);
+    // TODO: get rid of this try-catch
+    try {
+      if (selectedProviderIndex === -1) {
+
+        selectProvider(providers[0].id);
+        selectModel(providers[0].models[0].id);
+      } else if (selectedModelIndex === -1) {
+        selectModel(providers[selectedProviderIndex].models[0].id);
+      }
+    }
+    catch (e) {
+      console.log(e);
     }
   }, [selectedProviderIndex, selectedModelIndex, providers]);
+
+  const modelSelection = []
+  if (providerOptions.length === 0) {
+    modelSelection.push(
+      <div key="no-providers">
+        No providers available (add one in the sidebar)
+      </div>
+    );
+  }
+  else {
+    modelSelection.push(
+      <Dropdown
+      key="providerDropdown"
+        selectedOptionIndex={selectedProviderIndex}
+        menuOptions={providerOptions}
+      />
+    );
+    if (selectedProviderIndex !== -1 && modelOptions && modelOptions.length > 0) {
+      modelSelection.push(
+        "//",
+        <Dropdown
+          key="modelDropdown"
+          selectedOptionIndex={selectedModelIndex}
+          menuOptions={modelOptions || []}
+        />
+      );
+    }
+    else {
+      modelSelection.push(
+        <div key="no-models">
+          No models available
+        </div>
+      );
+    }
+  }
+
 
   return (
     <div className="flex items-center flex-shrink-0 h-16 border-b border-slate-300">
@@ -151,15 +194,7 @@ export const Navbar = ({
       <button className="flex items-center justify-center h-10 px-4 ml-2 text-sm font-medium bg-slate-200 rounded hover:bg-slate-300">
         Action 2
       </button> */}
-      <Dropdown
-        selectedOptionIndex={selectedProviderIndex}
-        menuOptions={providerOptions}
-      />
-      //
-      <Dropdown
-        selectedOptionIndex={selectedModelIndex}
-        menuOptions={modelOptions || []}
-      />
+      {modelSelection}
     </div>
   );
 };

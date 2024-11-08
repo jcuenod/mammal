@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   // getProviders,
   addProvider,
@@ -8,7 +8,7 @@ import {
   addModel,
   // removeModel,
   updateModel,
-  getAll,
+  // getAll,
 } from "../state/modelProviders";
 import type {
   ProviderWithModels,
@@ -16,6 +16,26 @@ import type {
   StoredProvider,
 } from "../state/modelProviders";
 import { knownProviders } from "../fixtures/knownProviders";
+import { ModelProviderContext } from "../state/modelProviderContext";
+
+type addProviderHelperFunction = (
+  provider: {
+    name: string;
+    endpoint: string;
+    apiKey: string;
+  },
+  models: { name: string; model: string }[]
+) => void;
+const addProviderHelper: addProviderHelperFunction = async (provider, models) => {
+  const providerId = await addProvider(provider)
+  models.map((model) => {
+    addModel({
+      name: model.name,
+      model: model.model,
+      providerId,
+    })
+  })
+}
 
 type AddProviderFormProps = {
   onClose: () => void;
@@ -77,7 +97,7 @@ const AddProviderForm = ({ onClose }: AddProviderFormProps) => {
           <button
             type="submit"
             className="px-4 py-2 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors"
-            onClick={() => {
+            onClick={async () => {
               const providerToUse = knownProviders.find(
                 (p) => p.name === knownProvider
               );
@@ -85,34 +105,13 @@ const AddProviderForm = ({ onClose }: AddProviderFormProps) => {
               const endpointToUse = providerToUse
                 ? providerToUse.endpoint
                 : endpoint;
-              addProvider({
+              const provider = {
                 name: nameToUse,
                 endpoint: endpointToUse,
                 apiKey,
-              }).then(async () => {
-                if (providerToUse) {
-                  const providers = await getAll();
-                  const providerJustAdded = providers.find(
-                    (p) =>
-                      p.name === nameToUse &&
-                      p.endpoint === endpointToUse &&
-                      p.apiKey === apiKey
-                  );
-                  if (!providerJustAdded) {
-                  } else {
-                    await Promise.all([
-                      providerToUse.models.map((model) => {
-                        addModel({
-                          name: model.name,
-                          model: model.model,
-                          providerId: providerJustAdded.id,
-                        });
-                      }),
-                    ]);
-                  }
-                }
-                onClose();
-              });
+              }
+              addProviderHelper(provider, providerToUse?.models || [])
+              onClose()
             }}
           >
             Add Provider
@@ -435,17 +434,7 @@ type ModelProviderManagerProps = {
 };
 export const ModelProviderManager = ({ open }: ModelProviderManagerProps) => {
   const [formState, setFormState] = useState<FormState>({ state: "none" });
-  const [providers, setProviders] = useState<ProviderWithModels[]>([]);
-
-  const refreshProviders = () => {
-    getAll().then((providers) => {
-      setProviders(providers);
-    });
-  };
-
-  useEffect(() => {
-    refreshProviders();
-  }, []);
+  const { providers, refresh } = useContext(ModelProviderContext);
 
   return (
     <div
@@ -478,7 +467,7 @@ export const ModelProviderManager = ({ open }: ModelProviderManagerProps) => {
               setFormState={setFormState}
               deleteProvider={(providerId) => {
                 removeProvider(providerId).then(() => {
-                  refreshProviders();
+                  refresh()
                 });
               }}
             />
@@ -493,7 +482,10 @@ export const ModelProviderManager = ({ open }: ModelProviderManagerProps) => {
           formState={formState}
           onClose={() => {
             setFormState({ state: "none" });
-            refreshProviders();
+            // We need setTimeout here because addProvider crashes when
+            // there are callbacks dependent on awaiting the async db update
+            // (evidently a bug in tauri's sqlite plugin...)
+            setTimeout(refresh, 50);
           }}
         />
       </div>

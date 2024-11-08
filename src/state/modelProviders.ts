@@ -1,4 +1,5 @@
 import db from "./db";
+import { QueryResult } from "@tauri-apps/plugin-sql";
 
 // CREATE TABLE IF NOT EXISTS providers (
 //     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,15 +40,16 @@ export const getProviders = async () => {
 };
 
 export const addProvider = async (provider: Provider) => {
-  await db.execute(
-    `INSERT INTO providers (name, endpoint, apiKey) VALUES ($1, $2, $3)`,
+  const result = await db.execute(
+    `INSERT INTO providers (name, endpoint, apiKey) VALUES (?, ?, ?)`,
     [provider.name, provider.endpoint, provider.apiKey]
   );
+  return result.lastInsertId;
 };
 
 export const removeProvider = async (providerId: number) => {
-  await db.execute(`DELETE FROM models WHERE providerId = $1`, [providerId]);
-  await db.execute(`DELETE FROM providers WHERE id = $1`, [providerId]);
+  await db.execute(`DELETE FROM models WHERE providerId = ?`, [providerId]);
+  await db.execute(`DELETE FROM providers WHERE id = ?`, [providerId]);
   // Also remove all models associated with this provider
 };
 
@@ -56,13 +58,13 @@ export const updateProvider = async (
   provider: Provider
 ) => {
   await db.execute(
-    `UPDATE providers SET name = $1, endpoint = $2, apiKey = $3 WHERE id = $4`,
+    `UPDATE providers SET name = ?, endpoint = ?, apiKey = ? WHERE id = ?`,
     [provider.name, provider.endpoint, provider.apiKey, providerId]
   );
 };
 
 export const getModels = async (providerId: number) => {
-  const models = await db.select(`SELECT * FROM models WHERE providerId = $1`, [
+  const models = await db.select(`SELECT * FROM models WHERE providerId = ?`, [
     providerId,
   ]);
   return models as StoredModel[];
@@ -70,24 +72,25 @@ export const getModels = async (providerId: number) => {
 
 export const addModel = async (model: Model) => {
   // Make sure the provider exists
-  const provider = (await db.select(`SELECT * FROM providers WHERE id = $1`, [
+  const provider = (await db.select(`SELECT * FROM providers WHERE id = ?`, [
     model.providerId,
   ])) as StoredProvider[];
   if (provider.length === 0) {
     throw new Error(`Provider with id ${model.providerId} does not exist`);
   }
-  await db.execute(
-    `INSERT INTO models (name, model, providerId) VALUES ($1, $2, $3)`,
+  const result = await db.execute(
+    `INSERT INTO models (name, model, providerId) VALUES (?, ?, ?)`,
     [model.name, model.model, model.providerId]
   );
+  return result.lastInsertId;
 };
 
 export const removeModel = async (modelId: number) => {
-  await db.execute(`DELETE FROM models WHERE id = $1`, [modelId]);
+  await db.execute(`DELETE FROM models WHERE id = ?`, [modelId]);
 };
 
 export const updateModel = async (modelId: number, model: PartialModel) => {
-  await db.execute(`UPDATE models SET name = $1, model = $2 WHERE id = $3`, [
+  await db.execute(`UPDATE models SET name = ?, model = ? WHERE id = ?`, [
     model.name,
     model.model,
     modelId,

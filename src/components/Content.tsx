@@ -129,8 +129,19 @@ export const Content = () => {
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
+  const scrollToBottom = () => {
+    const $scrollEl = scrollRef.current;
+    requestAnimationFrame(() => {
+      $scrollEl?.scrollTo({
+        top: $scrollEl.scrollHeight,
+        behavior: "smooth",
+      });
+    });
+  };
+
   useEffect(() => {
     chatboxRef.current?.focus();
+    scrollToBottom()
   }, [toi]);
 
   useEffect(() => {
@@ -145,23 +156,6 @@ export const Content = () => {
       setMessages([...thread]);
     }
   }, [thread, lastMessage]);
-
-  // const shouldScrollToBottom = () => {
-  //   const $scrollEl = scrollRef.current;
-  //   return $scrollEl
-  //     ? $scrollEl.scrollHeight - $scrollEl.scrollTop === $scrollEl.clientHeight
-  //     : false;
-  // };
-
-  const scrollToBottom = () => {
-    const $scrollEl = scrollRef.current;
-    requestAnimationFrame(() => {
-      $scrollEl?.scrollTo({
-        top: $scrollEl.scrollHeight,
-        behavior: "smooth",
-      });
-    });
-  };
 
   const onSubmit = async () => {
     setBusy(true);
@@ -250,11 +244,9 @@ export const Content = () => {
         });
         setLastMessage(null);
         setBusy(false);
-        // if (s) {
         setTimeout(() => {
           scrollToBottom();
         }, 10);
-        // }
       }
     );
   };
