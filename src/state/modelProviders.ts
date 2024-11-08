@@ -1,5 +1,5 @@
 import db from "./db";
-import { QueryResult } from "@tauri-apps/plugin-sql";
+// import { QueryResult } from "@tauri-apps/plugin-sql";
 
 // CREATE TABLE IF NOT EXISTS providers (
 //     id INTEGER PRIMARY KEY AUTOINCREMENT,
