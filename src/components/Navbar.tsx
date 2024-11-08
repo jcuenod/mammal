@@ -23,7 +23,7 @@ const Dropdown = ({ selectedOptionIndex, menuOptions }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="relative ml-2 text-sm group">
+    <div className="relative mx-2 text-sm group">
       <button
         onClick={() => setIsOpen(!isOpen)}
         onBlur={() => setTimeout(() => setIsOpen(false), 300)}
@@ -132,19 +132,30 @@ export const Navbar = ({
       .find((p) => p.id === selectedProviderId)
       ?.models.findIndex((model) => model.id === selectedModelId) || 0;
 
+  useEffect(() => {
+    if (providers.length === 0) return;
+    if (selectedProviderIndex === -1) {
+      selectProvider(providers[0].id);
+      selectModel(providers[0].models[0].id);
+    } else if (selectedModelIndex === -1) {
+      selectModel(providers[selectedProviderIndex].models[0].id);
+    }
+  }, [selectedProviderIndex, selectedModelIndex, providers]);
+
   return (
-    <div className="flex items-center flex-shrink-0 h-16 px-8 border-b border-slate-300">
-      <h1 className="text-lg font-medium">Page Title</h1>
+    <div className="flex items-center flex-shrink-0 h-16 border-b border-slate-300">
+      {/* <h1 className="text-lg font-medium">Page Title</h1>
       <button className="flex items-center justify-center h-10 px-4 ml-auto text-sm font-medium rounded hover:bg-slate-300">
         Action 1
       </button>
       <button className="flex items-center justify-center h-10 px-4 ml-2 text-sm font-medium bg-slate-200 rounded hover:bg-slate-300">
         Action 2
-      </button>
+      </button> */}
       <Dropdown
         selectedOptionIndex={selectedProviderIndex}
         menuOptions={providerOptions}
       />
+      //
       <Dropdown
         selectedOptionIndex={selectedModelIndex}
         menuOptions={modelOptions || []}

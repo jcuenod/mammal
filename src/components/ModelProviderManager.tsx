@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import {
-  getProviders,
+  // getProviders,
   addProvider,
   removeProvider,
   updateProvider,
-  getModels,
+  // getModels,
   addModel,
-  removeModel,
+  // removeModel,
   updateModel,
   getAll,
 } from "../state/modelProviders";
@@ -90,7 +90,6 @@ const AddProviderForm = ({ onClose }: AddProviderFormProps) => {
                 endpoint: endpointToUse,
                 apiKey,
               }).then(async () => {
-                console.log("Added provider");
                 if (providerToUse) {
                   const providers = await getAll();
                   const providerJustAdded = providers.find(
@@ -99,11 +98,8 @@ const AddProviderForm = ({ onClose }: AddProviderFormProps) => {
                       p.endpoint === endpointToUse &&
                       p.apiKey === apiKey
                   );
-                  console.log(providerJustAdded);
                   if (!providerJustAdded) {
-                    console.error("Could not find provider just added");
                   } else {
-                    console.log(providerToUse.models);
                     await Promise.all([
                       providerToUse.models.map((model) => {
                         addModel({
@@ -113,7 +109,6 @@ const AddProviderForm = ({ onClose }: AddProviderFormProps) => {
                         });
                       }),
                     ]);
-                    console.log("Added models");
                   }
                 }
                 onClose();
@@ -444,7 +439,6 @@ export const ModelProviderManager = ({ open }: ModelProviderManagerProps) => {
 
   const refreshProviders = () => {
     getAll().then((providers) => {
-      console.log(providers);
       setProviders(providers);
     });
   };

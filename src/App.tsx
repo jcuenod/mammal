@@ -1,6 +1,5 @@
 import { useState } from "react";
 import "./App.css";
-import { Navbar } from "./components/Navbar";
 import { SecondarySidebar } from "./components/SecondarySidebar";
 import { Sidebar } from "./components/Sidebar";
 import { Content } from "./components/Content";
@@ -29,23 +28,6 @@ function App() {
         <Content />
         <ModelProviderManager open={modalState === "add-provider"} />
       </div>
-      {/* <ApiProviders
-        open={modalState === "add-provider"}
-        onClose={() => setModalState("none")}
-        providers={providers}
-        onAddProvider={(provider) => {
-          setProviders([...providers, provider]);
-          console.log(providers);
-        }}
-        onRemoveProvider={(providerId) => {
-          setProviders(providers.filter((p) => p.id !== providerId));
-        }}
-        onUpdateProvider={(provider) => {
-          setProviders(
-            providers.map((p) => (p.id === provider.id ? provider : p))
-          );
-        }}
-      /> */}
     </div>
   );
 }
