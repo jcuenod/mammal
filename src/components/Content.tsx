@@ -116,7 +116,7 @@ const Message = ({ name, markdown, role }: MessageProps) => {
 
 export const Content = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const chatboxRef = useRef<HTMLInputElement>(null);
+  const chatboxRef = useRef<HTMLTextAreaElement>(null);
   const [selectedProviderId, selectProvider] = useState<number>(0);
   const [selectedModelId, selectModel] = useState<number>(0);
   const { messageThread, threadOpId } = useMessageStore();
@@ -135,31 +135,25 @@ export const Content = () => {
 
   useEffect(() => {
     if (lastMessage) {
-      console.log("last message x");
       // ignore the last message if it's already in the list
       if (thread.find((m) => m.message === lastMessage.message)) {
-        console.log("last message y");
         setMessages([...thread]);
       } else {
-        console.log("last message z");
         setMessages([...thread, lastMessage]);
       }
     } else {
-      console.log("last message q");
-      console.log(thread);
       setMessages([...thread]);
     }
   }, [thread, lastMessage]);
 
-  const shouldScrollToBottom = () => {
-    const $scrollEl = scrollRef.current;
-    return $scrollEl
-      ? $scrollEl.scrollHeight - $scrollEl.scrollTop === $scrollEl.clientHeight
-      : false;
-  };
+  // const shouldScrollToBottom = () => {
+  //   const $scrollEl = scrollRef.current;
+  //   return $scrollEl
+  //     ? $scrollEl.scrollHeight - $scrollEl.scrollTop === $scrollEl.clientHeight
+  //     : false;
+  // };
 
   const scrollToBottom = () => {
-    console.log("scrolling to bottom");
     const $scrollEl = scrollRef.current;
     requestAnimationFrame(() => {
       $scrollEl?.scrollTo({
@@ -242,7 +236,8 @@ export const Content = () => {
             temperature: 0.5,
           },
         });
-        const _evenNewerId = await addMessage({
+        // const _evenNewerId =
+        await addMessage({
           name: author,
           role: "assistant",
           replyTo: newId,
@@ -289,15 +284,24 @@ export const Content = () => {
           )} */}
       </div>
       {/* chat box at the bottom */}
-      <div className="flex items-center w-full bg-slate-100 px-6 py-4">
-        <input
-          className="flex-grow h-14 px-7 border-0 bg-white rounded-lg"
-          type="text"
+      <div className="flex items-center w-full bg-slate-100 px-6 py-4 relative">
+        <textarea
+          className="flex-grow pl-6 pr-12 py-4 border-0 bg-white rounded-lg"
+          style={{
+            height:
+              2 +
+              Math.max(
+                1.5,
+                Math.min(textInputValue.split("\n").length * 1.5, 20)
+              ) +
+              "rem",
+          }}
           placeholder="Type a message..."
           value={textInputValue}
           onChange={(e) => setTextInputValue(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
               onSubmit();
             }
           }}
@@ -305,7 +309,7 @@ export const Content = () => {
         />
         <button
           type="button"
-          className="absolute right-8 flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:bg-slate-200 hover:text-slate-500 active:scale-95"
+          className="absolute right-8 top-6 flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:bg-slate-200 hover:text-slate-500 active:scale-95"
           onClick={onSubmit}
           disabled={busy}
         >
