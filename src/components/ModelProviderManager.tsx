@@ -17,6 +17,7 @@ import type {
 } from "../state/modelProviders";
 import { knownProviders } from "../fixtures/knownProviders";
 import { ModelProviderContext } from "../state/modelProviderContext";
+import { EditIcon, PlusIcon, XIcon } from "./Icons";
 
 type addProviderHelperFunction = (
   provider: {
@@ -96,7 +97,7 @@ const AddProviderForm = ({ onClose }: AddProviderFormProps) => {
         <div className="flex space-x-4 pt-4">
           <button
             type="submit"
-            className="px-4 py-2 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors"
+            className="px-4 py-2 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors active:bg-slate-400"
             onClick={async () => {
               const providerToUse = knownProviders.find(
                 (p) => p.name === knownProvider
@@ -119,7 +120,7 @@ const AddProviderForm = ({ onClose }: AddProviderFormProps) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors"
+            className="px-4 py-2 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors active:bg-slate-100"
           >
             Cancel
           </button>
@@ -174,7 +175,7 @@ const EditProviderForm = ({
         <div className="flex space-x-4 pt-4">
           <button
             type="submit"
-            className="px-4 py-2 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors"
+            className="px-4 py-2 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors active:bg-slate-400"
             onClick={() =>
               updateProvider(selectedProvider.id, {
                 name,
@@ -188,7 +189,7 @@ const EditProviderForm = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors"
+            className="px-4 py-2 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors active:bg-slate-100"
           >
             Cancel
           </button>
@@ -231,7 +232,7 @@ const AddModelForm = ({ providerId, onClose }: AddModelFormProps) => {
         <div className="flex space-x-4 pt-4">
           <button
             type="submit"
-            className="px-4 py-2 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors"
+            className="px-4 py-2 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors active:bg-slate-400"
             onClick={() => {
               addModel({
                 name,
@@ -245,7 +246,7 @@ const AddModelForm = ({ providerId, onClose }: AddModelFormProps) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors"
+            className="px-4 py-2 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors active:bg-slate-100"
           >
             Cancel
           </button>
@@ -270,7 +271,7 @@ const EditModelForm = ({ selectedModel, onClose }: EditModelFormProps) => {
 
   return (
     <form className="space-y-6">
-      <h2 className="text-xl font-semibold">Edit Model ({selectedModel.id})</h2>
+      <h2 className="text-xl font-semibold">Edit Model</h2>
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">Name</label>
@@ -293,7 +294,7 @@ const EditModelForm = ({ selectedModel, onClose }: EditModelFormProps) => {
         <div className="flex space-x-4 pt-4">
           <button
             type="submit"
-            className="px-4 py-2 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors"
+            className="px-4 py-2 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors active:bg-slate-400"
             onClick={() => {
               updateModel(selectedModel.id, {
                 name,
@@ -306,7 +307,7 @@ const EditModelForm = ({ selectedModel, onClose }: EditModelFormProps) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors"
+            className="px-4 py-2 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors active:bg-slate-100"
           >
             Cancel
           </button>
@@ -378,29 +379,29 @@ const Provider = ({
   deleteProvider,
 }: ProviderProps) => (
   <div>
-    <div className="flex flex-row items-center border-b-2 border-slate-200 mb-2 mt-4">
-      <div className="flex-grow font-bold">{provider.name}</div>
+    <div className="flex flex-row items-center border-b-2 border-slate-200 mb-2 pb-1 mt-4">
+      <div className="flex-grow font-bold ml-2">{provider.name}</div>
       {/* edit and delete buttons */}
       <button
         onClick={() =>
           setFormState({ state: "edit-provider", providerId: provider.id })
         }
-        className="p-2 hover:bg-slate-200 rounded-md"
+        className="p-2 hover:bg-slate-200 rounded-md active:scale-95"
       >
-        Edit
+        <EditIcon className={"w-4 h-4"} />
       </button>
       <button
         onClick={() => deleteProvider(provider.id)}
-        className="p-2 hover:bg-red-100 text-red-600 rounded-md"
+        className="p-2 hover:bg-red-100 text-red-600 rounded-md active:scale-95"
       >
-        Delete
+        <XIcon className={"w-4 h-4"} />
       </button>
     </div>
     <div>
       {provider.models.map((model) => (
         <div key={model.id} className="flex flex-row items-center">
           <button
-            className="px-2 py-1 hover:bg-slate-200 rounded-md w-full text-left"
+            className="p-2 hover:bg-slate-200 rounded-md w-full text-left active:bg-slate-300"
             onClick={() =>
               setFormState({ state: "edit-model", modelId: model.id })
             }
@@ -414,9 +415,12 @@ const Provider = ({
           onClick={() =>
             setFormState({ state: "new-model", providerId: provider.id })
           }
-          className="px-2 hover:bg-slate-200 rounded-md w-full text-center"
+          className="p-2 hover:bg-slate-200 rounded-md w-full flex items-center justify-center active:bg-slate-300"
         >
-          +
+          <PlusIcon className="w-4 h-4" />
+          <span className="pl-2">
+            Add New Model
+          </span>
         </button>
       </div>
     </div>
@@ -452,9 +456,9 @@ export const ModelProviderManager = ({ open }: ModelProviderManagerProps) => {
           <h2 className="text-xl font-semibold">Model Providers</h2>
           <button
             onClick={() => setFormState({ state: "new-provider" })}
-            className="px-4 py-2 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors"
+            className="p-2 bg-slate-100 rounded-md hover:bg-slate-300 active:scale-95 transition-colors"
           >
-            +
+            <PlusIcon className="w-6 h-6" />
           </button>
         </div>
 
@@ -476,7 +480,7 @@ export const ModelProviderManager = ({ open }: ModelProviderManagerProps) => {
       </div>
 
       {/* Right Side - Forms */}
-      <div className="w-2/3 pl-6 pt-2 min-h-full">
+      <div className="w-2/3 pl-6 py-6 overflow-auto min-h-full">
         <ModelProviderManagerForm
           providers={providers}
           formState={formState}

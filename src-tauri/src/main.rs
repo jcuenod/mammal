@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 
@@ -62,11 +63,20 @@ fn main() {
             kind: MigrationKind::Up,
         },
     ];
-    let x = tauri::Builder::default().plugin(
-        tauri_plugin_sql::Builder::default()
-            .add_migrations("sqlite:mammal.db", migrations)
-            .build(),
-    );
-    x.run(tauri::generate_context!())
+    let app = tauri::Builder::default()
+        .plugin(
+            tauri_plugin_sql::Builder::default()
+                .add_migrations("sqlite:mammal.db", migrations)
+                .build(),
+        )
+        .setup(|app| {
+            let window = app.get_webview_window("main").unwrap();
+            window.set_size(tauri::Size::Logical(tauri::LogicalSize {
+                width: 1000.0,
+                height: 600.0,
+            })).unwrap();
+            Ok(())
+        });
+    app.run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -6,24 +6,7 @@ import {
 } from "../state/messages";
 import db from "../state/db";
 import type { ChatMessage } from "../state/messages";
-
-const XIcon = ({ className }: { className: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M18 6 6 18" />
-    <path d="m6 6 12 12" />
-  </svg>
-);
+import { XIcon } from "./Icons";
 
 const mostRecentMessageInTree = (messages: ChatMessage[]) => {
   return messages
@@ -100,13 +83,13 @@ const Link = ({ onOpen, onDelete, label }: LinkProps) => (
     />
     {/* delete button */}
     <button
-      className="w-8 min-w-8 h-8 mr-1 ml-auto text-slate-500 hover:bg-red-300 items-center justify-center rounded group-hover:flex hover:text-white active:scale-95 active:bg-red-400 hidden"
+      className="w-6 min-w-6 h-6 mr-2 ml-auto text-slate-500 hover:bg-red-400 items-center justify-center rounded group-hover:flex hover:text-white active:scale-95 active:bg-red-500 hidden"
       onClick={(e) => {
         e.stopPropagation();
         onDelete();
       }}
     >
-      <XIcon className="w-6 h-6" />
+      <XIcon className="w-4 h-4" />
     </button>
   </a>
 );
