@@ -167,7 +167,7 @@ export const Content = () => {
       name: "User",
       role: "user",
       message: userPrompt,
-      replyTo: messages[messages.length - 1]?.id,
+      replyTo: messages[messages.length - 1]?.treeId,
     });
     scrollToBottom();
 
@@ -204,7 +204,7 @@ export const Content = () => {
       messageMap,
       (responseSnapshot) => {
         setLastMessage({
-          id: "irrelevant",
+          treeId: "irrelevant",
           role: "assistant",
           name: author,
           createdAt: new Date().toISOString(),
@@ -219,7 +219,7 @@ export const Content = () => {
       },
       async (content) => {
         setLastMessage({
-          id: "irrelevant",
+          treeId: "irrelevant",
           role: "assistant",
           name: author,
           createdAt: new Date().toISOString(),
@@ -263,8 +263,8 @@ export const Content = () => {
         className="p-6 flex-grow flex-col-reverse overflow-auto bg-slate-100"
         ref={scrollRef}
       >
-        {[...messages].map(({ id, name, role, message }) => (
-          <Message key={id} name={name} role={role} markdown={message} />
+        {[...messages].map(({ treeId, name, role, message }) => (
+          <Message key={treeId} name={name} role={role} markdown={message} />
         ))}
         {/* {lastMessage && (
             <Message

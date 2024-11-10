@@ -6,7 +6,7 @@ import {
 } from "../state/messages";
 import db from "../state/db";
 import type { ChatMessage } from "../state/messages";
-import { XIcon } from "./Icons";
+import { SearchIcon, XIcon } from "./Icons";
 
 const mostRecentMessageInTree = (messages: ChatMessage[]) => {
   return messages
@@ -43,26 +43,17 @@ const Searchbar = ({ query, setQuery }: SearchbarProps) => (
   <div className="relative">
     <input
       type="text"
-      className="w-full h-10 px-4 mb-4 text-sm border-0 rounded-full bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300"
+      className="w-full h-10 px-4 mb-4 text-sm border-0 rounded-full bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
       placeholder="Search..."
       value={query}
       onChange={(e) => setQuery(e.target.value)}
     />
-    <button className="absolute w-8 h-8 top-1 right-1 text-slate-500 hover:bg-slate-300 flex items-center justify-center rounded-full active:scale-95">
-      <svg
-        className="w-5 h-5"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-        />
-      </svg>
+    <button className="absolute w-8 h-8 top-1 right-1 text-slate-500 hover:bg-slate-300 flex items-center justify-center rounded-full active:scale-95"
+      style={{ pointerEvents: query ? "auto" : "none" }}
+      onClick={() => setQuery("")}
+    >
+      <SearchIcon className={"absolute w-5 h-5 transition-all" + (!!query && " opacity-0 scale-0")} />
+      <XIcon className={"absolute w-5 h-5 transition-all" + (!query && " opacity-0 scale-0")} />
     </button>
   </div>
 );
@@ -121,7 +112,7 @@ export const SecondarySidebar = () => {
   useEffect(() => {
     const latestMessage = mostRecentMessageInTree(messageTree);
     if (latestMessage) {
-      setActiveMessage(latestMessage.id);
+      setActiveMessage(latestMessage.treeId);
     }
   }, [messageTree]);
 
@@ -133,13 +124,13 @@ export const SecondarySidebar = () => {
         <Searchbar query={query} setQuery={setQuery} />
       </div>
       <div className="flex-grow overflow-auto">
-        {messageListToUse.map((m: ChatMessage) => (
+        {messageListToUse.map(({ message, treeId }: ChatMessage) => (
           <Link
-            key={m.id}
-            label={m.message}
-            onOpen={() => setActiveMessage(m.id)}
+            key={treeId}
+            label={message}
+            onOpen={() => setActiveMessage(treeId)}
             onDelete={() => {
-              deleteMessageAndDescendants(m.id);
+              deleteMessageAndDescendants(treeId);
             }}
           />
         ))}

@@ -19,30 +19,31 @@ fn main() {
             description: "create_initial_tables",
             sql: "
             CREATE TABLE IF NOT EXISTS messages (
-                id TEXT PRIMARY KEY,
+                id INTEGER PRIMARY KEY,
+                treeId TEXT UNIQUE NOT NULL,
                 role TEXT NOT NULL,
                 name TEXT NOT NULL,
                 createdAt TEXT NOT NULL,
                 message TEXT,
                 metadata TEXT
             );
-            CREATE INDEX id_index ON messages (id);
+            CREATE INDEX id_index ON messages (treeId);
             CREATE VIRTUAL TABLE messages_fts USING fts5(message, content='messages', content_rowid='id');
 
             -- Trigger for INSERT
             CREATE TRIGGER messages_ai AFTER INSERT ON messages BEGIN
-                INSERT INTO messages_fts(rowid, message) VALUES (new.rowid, new.message);
+                INSERT INTO messages_fts(rowid, message) VALUES (new.id, new.message);
             END;
 
             -- Trigger for DELETE
             CREATE TRIGGER messages_ad AFTER DELETE ON messages BEGIN
-                INSERT INTO messages_fts(messages_fts, rowid, message) VALUES('delete', old.rowid, old.message);
+                INSERT INTO messages_fts(messages_fts, rowid, message) VALUES('delete', old.id, old.message);
             END;
 
             -- Trigger for UPDATE
             CREATE TRIGGER messages_au AFTER UPDATE ON messages BEGIN
-                INSERT INTO messages_fts(messages_fts, rowid, message) VALUES('delete', old.rowid, old.message);
-                INSERT INTO messages_fts(rowid, message) VALUES (new.rowid, new.message);
+                INSERT INTO messages_fts(messages_fts, rowid, message) VALUES('delete', old.id, old.message);
+                INSERT INTO messages_fts(rowid, message) VALUES (new.id, new.message);
             END;
 
             CREATE TABLE IF NOT EXISTS providers (

@@ -4,7 +4,7 @@ import { computed } from "./zustandCompute";
 
 export type ChatMessageRole = "user" | "assistant" | "system";
 export type ChatMessage = {
-  id: string; // like 123.512.52 (so the first message will be 1, the first reply 1.1; if you regenerate the first reply it will be 1.2)
+  treeId: string; // like 123.512.52 (so the first message will be 1, the first reply 1.1; if you regenerate the first reply it will be 1.2)
   role: ChatMessageRole;
   name: string;
   createdAt: string;
@@ -19,7 +19,7 @@ export type ChatMessage = {
 const mapRowToChatMessage = (row: any): ChatMessage => {
   const metadata = JSON.parse(row.metadata);
   return {
-    id: row.id,
+    treeId: row.treeId,
     role: row.role,
     name: row.name,
     createdAt: row.createdAt,
@@ -28,8 +28,8 @@ const mapRowToChatMessage = (row: any): ChatMessage => {
   };
 };
 
-const getThreadOpId = (id: string) => {
-  return id.split(".")[0];
+const getThreadOpId = (treeId: string) => {
+  return treeId.split(".")[0];
 };
 
 const isSameThread = (id1: string, id2: string) => {
@@ -64,17 +64,17 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
 
       const queries = [
         db.select(
-          `SELECT * FROM messages WHERE id IN (
+          `SELECT * FROM messages WHERE treeId IN (
                 SELECT DISTINCT 
                     CASE
-                        WHEN INSTR(id, '.') > 0 THEN SUBSTR(id, 1, INSTR(id, '.') - 1)
-                        ELSE id
+                        WHEN INSTR(treeId, '.') > 0 THEN SUBSTR(treeId, 1, INSTR(treeId, '.') - 1)
+                        ELSE treeId
                     END AS threadOpId
                 FROM messages
           )`
         ),
         db.select(
-          `SELECT * FROM messages WHERE id = '${threadOpId}' OR id LIKE '${threadOpId}.%'`
+          `SELECT * FROM messages WHERE treeId = '${threadOpId}' OR treeId LIKE '${threadOpId}.%'`
         ),
       ];
 
@@ -92,25 +92,22 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
       messageTree
         .filter(
           (m) =>
-            typeof activeMessage === "string" && activeMessage.includes(m.id)
+            typeof activeMessage === "string" && activeMessage.includes(m.treeId)
         )
         .sort()
   ),
 }));
 
-export const deleteMessageAndDescendants = async (id: string) => {
+export const deleteMessageAndDescendants = async (treeId: string) => {
   await db.execute(
-    `DELETE FROM messages WHERE id = ${id} OR id LIKE '${id}.%'`
+    `DELETE FROM messages WHERE treeId = ${treeId} OR treeId LIKE '${treeId}.%'`
   );
   useMessageStore.setState((state) => {
     return {
       activeMessage: null,
       _cacheInvalidation: state._cacheInvalidation + 1,
     };
-    // const newMessageTree = state.messageTree.filter((m) => !m.id.includes(id));
-    // return {
-    //   activeMessage: newMessageTree.length ? newMessageTree[0].id : null,
-    // };
+    // TODO: set activeMessage more intelligently
   });
 };
 
@@ -132,15 +129,15 @@ export const addMessage = async ({
   metadata,
   replyTo,
 }: AddMessage) => {
-  // if replyTo is provided, we need to find the max immediate descendant of the replyTo message and increment by 1 for this id
-  // otherwise, we need to find the max top-level message and increment by 1 for this id
+  // if replyTo is provided, we need to find the max immediate descendant of the replyTo message and increment by 1 for this treeId
+  // otherwise, we need to find the max top-level message and increment by 1 for this treeId
   const getNewDescendantId = async (replyTo: string) => {
-    const ids = (await db.select(
-      `SELECT id FROM messages WHERE id LIKE '${replyTo}.%'`
-    )) as { id: string }[];
+    const treeIds = (await db.select(
+      `SELECT treeId FROM messages WHERE treeId LIKE '${replyTo}.%'`
+    )) as { treeId: string }[];
     const maxId =
-      ids
-        .map((m) => m.id.split(".").pop())
+      treeIds
+        .map((m) => m.treeId.split(".").pop())
         .filter((m) => m !== undefined)
         .map((m) => parseInt(m))
         .sort()
@@ -148,23 +145,23 @@ export const addMessage = async ({
     return `${replyTo}.${maxId + 1}`;
   };
   const getNewTopLevelId = async () => {
-    const ids = (await db.select(
-      `SELECT id FROM messages WHERE id NOT LIKE '%.%'`
-    )) as { id: string }[];
+    const treeIds = (await db.select(
+      `SELECT treeId FROM messages WHERE treeId NOT LIKE '%.%'`
+    )) as { treeId: string }[];
     const maxId =
-      ids
-        .map((m) => parseInt(m.id))
+      treeIds
+        .map((m) => parseInt(m.treeId))
         .sort()
         .pop() || 0;
     return `${maxId + 1}`;
   };
-  const newId = replyTo
+  const newTreeId = replyTo
     ? await getNewDescendantId(replyTo)
     : await getNewTopLevelId();
   await db.execute(
-    `INSERT INTO messages (id, name, role, createdAt, message, metadata) VALUES ($1, $2, $3, $4, $5, $6)`,
+    `INSERT INTO messages (treeId, name, role, createdAt, message, metadata) VALUES ($1, $2, $3, $4, $5, $6)`,
     [
-      newId,
+      newTreeId,
       name,
       role,
       new Date().toISOString(),
@@ -174,21 +171,21 @@ export const addMessage = async ({
   );
   useMessageStore.setState((state) => {
     return {
-      activeMessage: newId,
+      activeMessage: newTreeId,
       _cacheInvalidation: state._cacheInvalidation + 1,
     };
   });
-  return newId;
+  return newTreeId;
 };
 
-export const setActiveMessage = async (id: string | null) => {
+export const setActiveMessage = async (treeId: string | null) => {
   const { activeMessage } = useMessageStore.getState();
   if (
-    typeof id === "string" &&
+    typeof treeId === "string" &&
     typeof activeMessage === "string" &&
-    !isSameThread(id, activeMessage)
+    !isSameThread(treeId, activeMessage)
   ) {
     // await _reloadMessageTree();
   }
-  useMessageStore.setState({ activeMessage: id });
+  useMessageStore.setState({ activeMessage: treeId });
 };
