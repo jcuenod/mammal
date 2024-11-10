@@ -6,7 +6,7 @@ import {
 } from "../state/messages";
 import db from "../state/db";
 import type { ChatMessage } from "../state/messages";
-import { SearchIcon, XIcon } from "./Icons";
+import { SearchIcon, XIcon, DeleteIcon } from "./Icons";
 
 const mostRecentMessageInTree = (messages: ChatMessage[]) => {
   return messages
@@ -53,7 +53,7 @@ const Searchbar = ({ query, setQuery }: SearchbarProps) => (
       onClick={() => setQuery("")}
     >
       <SearchIcon className={"absolute w-5 h-5 transition-all" + (!!query && " opacity-0 scale-0")} />
-      <XIcon className={"absolute w-5 h-5 transition-all" + (!query && " opacity-0 scale-0")} />
+      <DeleteIcon className={"absolute w-5 h-5 transition-all" + (!query && " opacity-0 scale-0")} />
     </button>
   </div>
 );
