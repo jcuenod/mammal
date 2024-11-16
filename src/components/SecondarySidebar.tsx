@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import db from "../state/db";
-import { SearchIcon, XIcon } from "./Icons";
+import { SearchIcon, XIcon, DeleteIcon } from "./Icons";
 import { MessageContext } from "../state/messageContext";
 import type { MessageStoreContext, ChatMessage } from "../state/messageContext";
 
@@ -44,7 +44,7 @@ const Searchbar = ({ query, setQuery }: SearchbarProps) => (
           "absolute w-5 h-5 transition-all" + (!!query && " opacity-0 scale-0")
         }
       />
-      <XIcon
+      <DeleteIcon
         className={
           "absolute w-5 h-5 transition-all" + (!query && " opacity-0 scale-0")
         }
