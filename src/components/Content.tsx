@@ -215,8 +215,7 @@ const getSiblings = (treeId: string, messages: ChatMessage[]) => {
 
 export const Content = () => {
   // const { data, state, error } = useContext<MessageStoreContext>(M3Context);
-  const { data, messageState } =
-    useContext<MessageStoreContext>(MessageContext);
+  const { data } = useContext<MessageStoreContext>(MessageContext);
   const {
     messageThread: thread,
     addMessage,

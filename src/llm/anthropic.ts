@@ -3,7 +3,7 @@ import type { Message } from "@anthropic-ai/sdk/src/resources/messages.js";
 
 export const getResponse = async (
   apiKey: string,
-  baseURL: string,
+  _baseURL: string,
   model: string,
   messages: { role: string; content: string }[],
   onChunk: (responseSnapshot: string) => void,
