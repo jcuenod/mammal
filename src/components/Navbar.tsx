@@ -137,35 +137,36 @@ export const Navbar = ({
     // TODO: get rid of this try-catch
     try {
       if (selectedProviderIndex === -1) {
-
         selectProvider(providers[0].id);
         selectModel(providers[0].models[0].id);
       } else if (selectedModelIndex === -1) {
         selectModel(providers[selectedProviderIndex].models[0].id);
       }
-    }
-    catch (e) {
-      console.log(e);
+    } catch (e) {
+      console.error(e);
     }
   }, [selectedProviderIndex, selectedModelIndex, providers]);
 
-  const modelSelection = []
+  const modelSelection = [];
   if (providerOptions.length === 0) {
     modelSelection.push(
       <div key="no-providers">
         No providers available (add one in the sidebar)
       </div>
     );
-  }
-  else {
+  } else {
     modelSelection.push(
       <Dropdown
-      key="providerDropdown"
+        key="providerDropdown"
         selectedOptionIndex={selectedProviderIndex}
         menuOptions={providerOptions}
       />
     );
-    if (selectedProviderIndex !== -1 && modelOptions && modelOptions.length > 0) {
+    if (
+      selectedProviderIndex !== -1 &&
+      modelOptions &&
+      modelOptions.length > 0
+    ) {
       modelSelection.push(
         "//",
         <Dropdown
@@ -174,16 +175,10 @@ export const Navbar = ({
           menuOptions={modelOptions || []}
         />
       );
-    }
-    else {
-      modelSelection.push(
-        <div key="no-models">
-          No models available
-        </div>
-      );
+    } else {
+      modelSelection.push(<div key="no-models">No models available</div>);
     }
   }
-
 
   return (
     <div className="flex items-center flex-shrink-0 h-16 border-b border-slate-300">

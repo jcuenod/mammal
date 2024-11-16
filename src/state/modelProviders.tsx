@@ -1,38 +1,14 @@
+import { ModelProviderContext } from "./modelProviderContext";
+import type {
+  Provider,
+  StoredProvider,
+  Model,
+  StoredModel,
+  PartialModel,
+  ProviderWithModels,
+} from "./modelProviderContext";
+import { useEffect, useState } from "react";
 import db from "./db";
-// import { QueryResult } from "@tauri-apps/plugin-sql";
-
-// CREATE TABLE IF NOT EXISTS providers (
-//     id INTEGER PRIMARY KEY AUTOINCREMENT,
-//     name TEXT NOT NULL,
-//     endpoint TEXT NOT NULL,
-//     apiKey TEXT NOT NULL
-// );
-
-// CREATE TABLE IF NOT EXISTS models (
-//     id INTEGER PRIMARY KEY AUTOINCREMENT,
-//     name TEXT NOT NULL,
-//     model TEXT NOT NULL,
-//     providerId INTEGER NOT NULL,
-//     FOREIGN KEY (providerId) REFERENCES providers(id)
-// );
-
-export type Provider = {
-  name: string;
-  endpoint: string;
-  apiKey: string;
-};
-export type StoredProvider = Provider & { id: number };
-
-export type PartialModel = {
-  name: string;
-  model: string;
-};
-export type Model = {
-  providerId: number;
-} & PartialModel;
-export type StoredModel = Model & { id: number };
-
-export type ProviderWithModels = StoredProvider & { models: StoredModel[] };
 
 export const getProviders = async () => {
   const providers = await db.select(`SELECT * FROM providers`);
@@ -110,3 +86,31 @@ export const getAll = async () => {
     models: models.filter((model) => model.providerId === provider.id),
   }));
 };
+const ModelProviderContextWrapper = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const [modelProviders, setModelProviders] = useState<ProviderWithModels[]>(
+    []
+  );
+
+  const modelProviderContext = {
+    refresh: async () => {
+      const providers = await getAll();
+      setModelProviders(providers);
+    },
+    providers: modelProviders,
+  };
+
+  useEffect(() => {
+    modelProviderContext.refresh();
+  }, []);
+
+  return (
+    <ModelProviderContext.Provider value={modelProviderContext}>
+      {children}
+    </ModelProviderContext.Provider>
+  );
+};
+export default ModelProviderContextWrapper;

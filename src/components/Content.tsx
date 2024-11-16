@@ -1,187 +1,254 @@
-import { useMessageStore, addMessage } from "../state/messages";
-import type { ChatMessage, ChatMessageRole } from "../state/messages";
-import OpenAI from "openai";
-import { useState, useRef, useEffect } from "react";
+import {
+  ChatMessage,
+  ChatMessageRole,
+  MessageContext,
+  MessageStoreContext,
+} from "../state/messageContext";
+import { getResponse } from "../llm";
+import { useState, useRef, useEffect, useContext } from "react";
 import { Navbar } from "./Navbar";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./Content.css";
 import { getAll } from "../state/modelProviders";
+import { LeftChevronIcon, RefreshIcon, RightChevronIcon } from "./Icons";
+import { UserIcon, AssistantIcon, SendIcon } from "./Icons";
 
-const UserIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="w-7 h-7"
-  >
-    <circle cx="12" cy="8" r="5" />
-    <path d="M20 21a8 8 0 0 0-16 0" />
-  </svg>
-);
-const AssistantIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="w-7 h-7"
-  >
-    <path d="M12 8V4H8" />
-    <rect width="16" height="12" x="4" y="8" rx="2" />
-    <path d="M2 14h2" />
-    <path d="M20 14h2" />
-    <path d="M15 13v2" />
-    <path d="M9 13v2" />
-  </svg>
-);
-const SendIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="w-6 h-6"
-  >
-    <path d="M3.714 3.048a.498.498 0 0 0-.683.627l2.843 7.627a2 2 0 0 1 0 1.396l-2.842 7.627a.498.498 0 0 0 .682.627l18-8.5a.5.5 0 0 0 0-.904z" />
-    <path d="M6 12h16" />
-  </svg>
-);
+const getParentId = (treeId: string) =>
+  treeId.split(".").slice(0, -1).join(".");
 
-const getResponse = async (
-  apiKey: string,
-  baseURL: string,
-  model: string,
-  messages: { role: string; content: string }[],
-  updateResponseCallback: (responseSnapshot: string) => void,
-  onDone: (finalResponse: string) => void
-) => {
-  const client = new OpenAI({
-    apiKey: apiKey,
-    baseURL: baseURL,
-    dangerouslyAllowBrowser: true,
-  });
-
-  const stream = client.beta.chat.completions.stream({
-    // @ts-ignore
-    messages,
-    model,
-    stream: true,
-  });
-
-  stream.on("content", (_delta, snapshot) => {
-    updateResponseCallback(snapshot);
-  });
-
-  stream.on("content.done", ({ content }) => {
-    onDone(content);
-  });
+type GhostButtonProps = {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+  disabled?: boolean;
+  onClick?: () => void;
 };
+const GhostButton = ({
+  children,
+  style,
+  disabled,
+  onClick,
+}: GhostButtonProps) => (
+  <button
+    type="button"
+    className="flex justify-center items-center p-1 w-8 h-8 text-slate-600 cursor-pointer disabled:hover:bg-transparent hover:bg-slate-200 hover:text-slate-700 disabled:text-slate-300 rounded"
+    style={{ pointerEvents: disabled ? "none" : "auto", ...style }}
+    onClick={onClick}
+    disabled={disabled}
+  >
+    {children}
+  </button>
+);
 
-type MessageProps = {
-  name: string;
-  role: ChatMessageRole;
-  markdown: string;
-};
-const Message = ({ name, markdown, role }: MessageProps) => {
+const DirectionButton = ({
+  direction,
+  disabled,
+  onClick,
+}: {
+  direction: "left" | "right";
+  disabled: boolean;
+  onClick: () => void;
+}) => {
   return (
-    <div className="flex w-full p-6 mb-2 bg-white rounded-lg">
-      {/* <img className="w-10 h-10 rounded-full" src={avatar} alt={name} /> */}
-      <div className="w-10 h-10 min-w-10 rounded-full bg-blue-100 flex items-center justify-center">
-        {role === "user" ? <UserIcon /> : <AssistantIcon />}
-      </div>
-      <div className="flex flex-col ml-4 markdown-body">
-        <span className="font-bold">{name}</span>
-        <Markdown remarkPlugins={[remarkGfm]}>{markdown}</Markdown>
-      </div>
-    </div>
+    <GhostButton onClick={onClick} disabled={disabled}>
+      {direction === "left" ? (
+        <LeftChevronIcon className="w-8 h-8" />
+      ) : (
+        <RightChevronIcon className="w-8 h-8" />
+      )}
+    </GhostButton>
   );
 };
 
+type AssistantButtonsProps = {
+  leftSibling: string | null;
+  rightSibling: string | null;
+  busy: boolean;
+  onRegenerate?: () => void;
+  setActiveMessage: (treeId: string) => void;
+};
+const AssistantButtons = ({
+  leftSibling,
+  rightSibling,
+  busy,
+  onRegenerate,
+  setActiveMessage,
+}: AssistantButtonsProps) => (
+  <>
+    <DirectionButton
+      disabled={!leftSibling}
+      onClick={() => {
+        if (leftSibling) {
+          setActiveMessage(leftSibling);
+        }
+      }}
+      direction="left"
+    />
+    <DirectionButton
+      disabled={!rightSibling}
+      onClick={() => {
+        if (rightSibling) {
+          setActiveMessage(rightSibling);
+        }
+      }}
+      direction="right"
+    />
+    {/* regenerate button */}
+    <GhostButton
+      style={{
+        transition: "transform 0.5s",
+        transform: "rotate(0deg)",
+        transformOrigin: "center",
+        animation: busy ? "spin 1s linear infinite" : "none",
+      }}
+      disabled={busy}
+      onClick={() => {
+        if (onRegenerate) {
+          onRegenerate();
+        } else {
+          console.error("onRegenerate not defined");
+        }
+      }}
+    >
+      <RefreshIcon className="w-8 h-8" />
+    </GhostButton>
+  </>
+);
+
+type MessageProps = {
+  treeId: string;
+  leftSibling: string | null; // treeId
+  rightSibling: string | null; // treeId
+  name: string;
+  role: ChatMessageRole;
+  busy: boolean;
+  markdown: string;
+  activeMessage: string | null;
+  onRegenerate?: (callback?: (content: string) => void) => void;
+  setActiveMessage: (treeId: string) => void;
+};
+const Message = ({
+  treeId,
+  leftSibling,
+  rightSibling,
+  name,
+  markdown,
+  role,
+  busy,
+  activeMessage,
+  onRegenerate,
+  setActiveMessage,
+}: MessageProps) => (
+  <div
+    className={
+      "flex w-full p-6 mb-2 bg-white rounded-lg border-2 " +
+      (activeMessage === treeId ? "border-blue-400" : "border-white")
+    }
+  >
+    {/* <img className="w-10 h-10 rounded-full" src={avatar} alt={name} /> */}
+    <div className="w-10 h-10 min-w-10 rounded-full bg-blue-100 flex items-center justify-center">
+      {role === "user" ? <UserIcon /> : <AssistantIcon />}
+    </div>
+    <div className="flex flex-col ml-4 markdown-body w-full">
+      {/* space between flex items in row */}
+      <div className="flex flex-row justify-between">
+        <span className="font-bold">{name}</span>
+        <div className="flex flex-row justify-center items-center">
+          {role === "assistant" && (
+            <AssistantButtons
+              leftSibling={leftSibling}
+              rightSibling={rightSibling}
+              busy={busy}
+              onRegenerate={onRegenerate}
+              setActiveMessage={setActiveMessage}
+            />
+          )}
+        </div>
+      </div>{" "}
+      <Markdown remarkPlugins={[remarkGfm]}>{markdown}</Markdown>
+    </div>
+  </div>
+);
+
+const getSiblings = (treeId: string, messages: ChatMessage[]) => {
+  const parentId = getParentId(treeId);
+  const parentDepth = parentId.split(".").length;
+  const descendantsOfParent = messages
+    .filter((m) => m.treeId.startsWith(parentId + "."))
+    .map((m) => m.treeId);
+  const childrenOfParent = Array.from(
+    new Set(
+      descendantsOfParent.map((m) =>
+        m
+          .split(".")
+          .slice(0, parentDepth + 1)
+          .join(".")
+      )
+    )
+  ).sort((a, b) => {
+    const nodeA = a.split(".").pop();
+    const nodeB = b.split(".").pop();
+    if (nodeA && nodeB) {
+      return parseInt(nodeA) - parseInt(nodeB);
+    }
+    return 0;
+  });
+
+  const currentIndex = childrenOfParent.indexOf(treeId);
+  const leftSiblings = childrenOfParent.slice(0, currentIndex).reverse();
+  const rightSiblings = childrenOfParent.slice(currentIndex + 1);
+  // console.log({
+  //   treeId,
+  //   parentId,
+  //   leftSibling,
+  //   rightSibling,
+  //   indexOfCurrent: currentIndex,
+  //   descendantsOfParent,
+  //   childrenOfParent,
+  //   messages,
+  // });
+  return {
+    leftSibling: leftSiblings.length > 0 ? leftSiblings[0] : null,
+    rightSibling: rightSiblings.length > 0 ? rightSiblings[0] : null,
+  };
+};
+
 export const Content = () => {
+  // const { data, state, error } = useContext<MessageStoreContext>(M3Context);
+  const { data, messageState } =
+    useContext<MessageStoreContext>(MessageContext);
+  const {
+    messageThread: thread,
+    addMessage,
+    threadOpId,
+    messageTree,
+    activeMessage,
+    setActiveMessage,
+  } = data;
   const scrollRef = useRef<HTMLDivElement>(null);
   const chatboxRef = useRef<HTMLTextAreaElement>(null);
-  const [selectedProviderId, selectProvider] = useState<number>(0);
-  const [selectedModelId, selectModel] = useState<number>(0);
-  const { messageThread, threadOpId } = useMessageStore();
-  const thread = messageThread();
-  const toi = threadOpId();
-
   const [textInputValue, setTextInputValue] = useState("");
   const [busy, setBusy] = useState(false);
+  const [selectedProviderId, selectProvider] = useState<number>(0);
+  const [selectedModelId, selectModel] = useState<number>(0);
   const [lastMessage, setLastMessage] = useState<ChatMessage | null>();
-
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-
-  const scrollToBottom = () => {
-    const $scrollEl = scrollRef.current;
-    requestAnimationFrame(() => {
-      $scrollEl?.scrollTo({
-        top: $scrollEl.scrollHeight,
-        behavior: "smooth",
-      });
-    });
-  };
+  const islastMessageInThread = thread.find(
+    (m) => m.message === lastMessage?.message
+  );
+  const messages = lastMessage
+    ? !islastMessageInThread
+      ? [...thread, lastMessage]
+      : [...thread]
+    : [...thread];
 
   useEffect(() => {
     chatboxRef.current?.focus();
-    scrollToBottom()
-  }, [toi]);
+  }, [threadOpId]);
 
-  useEffect(() => {
-    if (lastMessage) {
-      // ignore the last message if it's already in the list
-      if (thread.find((m) => m.message === lastMessage.message)) {
-        setMessages([...thread]);
-      } else {
-        setMessages([...thread, lastMessage]);
-      }
-    } else {
-      setMessages([...thread]);
-    }
-  }, [thread, lastMessage]);
-
-  const onSubmit = async () => {
-    setBusy(true);
-
-    const userPrompt = textInputValue;
-    setTextInputValue("");
-
-    const newId = await addMessage({
-      name: "User",
-      role: "user",
-      message: userPrompt,
-      replyTo: messages[messages.length - 1]?.treeId,
-    });
-    scrollToBottom();
-
-    const messageMap = [
-      ...messages.map(({ role, message }) => ({
-        content: message,
-        role,
-      })),
-      {
-        role: "user",
-        content: userPrompt,
-      },
-    ];
-
+  const getProviderAndModel = async (
+    selectedProviderId: number,
+    selectedModelId: number
+  ) => {
     const providers = await getAll();
     const provider = providers.find((p) => p.id === selectedProviderId);
     if (!provider) {
@@ -196,12 +263,23 @@ export const Content = () => {
       return;
     }
 
+    return { provider, model };
+  };
+
+  const generateMessageAndAttachToParent = async (
+    provider: { apiKey: string; endpoint: string; name: string },
+    model: { model: string; name: string },
+    messages: { role: string; content: string }[],
+    parentId: string,
+    callback?: (content: string) => void
+  ) => {
     const author = `${provider.name} (${model.name})`;
+
     getResponse(
       provider.apiKey,
       provider.endpoint,
       model.model,
-      messageMap,
+      messages,
       (responseSnapshot) => {
         setLastMessage({
           treeId: "irrelevant",
@@ -215,7 +293,6 @@ export const Content = () => {
             temperature: 0.5,
           },
         });
-        scrollToBottom();
       },
       async (content) => {
         setLastMessage({
@@ -232,22 +309,94 @@ export const Content = () => {
         });
         // const _evenNewerId =
         await addMessage({
-          name: author,
-          role: "assistant",
-          replyTo: newId,
-          message: content,
-          metadata: {
-            provider: provider.name,
-            model: model.model,
-            temperature: 0.5,
+          data: {
+            name: author,
+            role: "assistant",
+            message: content,
+            metadata: {
+              provider: provider.name,
+              model: model.model,
+              temperature: 0.5,
+            },
           },
+          parentId,
         });
-        setLastMessage(null);
-        setBusy(false);
+        // We use a timeout so that the added message has time to enter the context (awaiting only awaits till the message is in the db)
         setTimeout(() => {
-          scrollToBottom();
-        }, 10);
+          setLastMessage(null);
+          setBusy(false);
+          callback?.(content);
+        }, 300);
       }
+    );
+  };
+
+  const onSubmit = async () => {
+    setBusy(true);
+
+    const userPrompt = textInputValue;
+    setTextInputValue("");
+
+    const newId = await addMessage({
+      data: {
+        name: "User",
+        role: "user",
+        message: userPrompt,
+      },
+      parentId: messages[messages.length - 1]?.treeId,
+    });
+
+    const messageMap = [
+      ...messages.map(({ role, message }) => ({
+        content: message,
+        role,
+      })),
+      {
+        role: "user",
+        content: userPrompt,
+      },
+    ];
+
+    const providerAndModel = await getProviderAndModel(
+      selectedProviderId,
+      selectedModelId
+    );
+    if (!providerAndModel) {
+      return;
+    }
+    const { provider, model } = providerAndModel;
+
+    generateMessageAndAttachToParent(provider, model, messageMap, newId);
+  };
+
+  const onRegenerate = async (
+    parentId: string,
+    callback?: (content: string) => void
+  ) => {
+    setBusy(true);
+
+    const providerAndModel = await getProviderAndModel(
+      selectedProviderId,
+      selectedModelId
+    );
+    if (!providerAndModel) {
+      return;
+    }
+    const { provider, model } = providerAndModel;
+
+    const mappedMessages = messages
+      .slice(0, messages.findIndex((m) => m.treeId === parentId) + 1)
+      .map(({ role, message }) => ({
+        content: message,
+        role,
+      }));
+
+    generateMessageAndAttachToParent(
+      provider,
+      model,
+      mappedMessages,
+      parentId,
+      callback
     );
   };
 
@@ -260,20 +409,36 @@ export const Content = () => {
         selectModel={selectModel}
       />
       <div
-        className="p-6 flex-grow flex-col-reverse overflow-auto bg-slate-100"
+        className="p-6 flex flex-grow flex-col-reverse overflow-auto bg-slate-100"
         ref={scrollRef}
       >
-        {[...messages].map(({ treeId, name, role, message }) => (
-          <Message key={treeId} name={name} role={role} markdown={message} />
+        {/* spacer for when there are too few messages to fill the screen */}
+        <div className="flex-grow" />
+        {/* messages */}
+        {[...messages].reverse().map(({ treeId, name, role, message }) => (
+          <Message
+            key={treeId}
+            treeId={treeId}
+            busy={busy}
+            {...getSiblings(treeId, messageTree)}
+            name={name}
+            role={role}
+            markdown={message}
+            activeMessage={activeMessage}
+            setActiveMessage={(treeId) => setActiveMessage(treeId)}
+            onRegenerate={() => {
+              if (role === "assistant") {
+                onRegenerate(getParentId(treeId));
+              } else {
+                console.error(
+                  "onRegenerate not defined for user/system messages"
+                );
+              }
+            }}
+          />
         ))}
-        {/* {lastMessage && (
-            <Message
-              name={lastMessage.name}
-              role={lastMessage.role}
-              key={lastMessage.id}
-              markdown={lastMessage.message}
-            />
-          )} */}
+        {/* spacer */}
+        <div className="h-6">&nbsp;</div>
       </div>
       {/* chat box at the bottom */}
       <div className="flex items-center w-full bg-slate-100 px-6 py-4 relative">
@@ -305,7 +470,7 @@ export const Content = () => {
           onClick={onSubmit}
           disabled={busy}
         >
-          <SendIcon />
+          <SendIcon className="w-6 h-6" />
         </button>
       </div>
     </div>

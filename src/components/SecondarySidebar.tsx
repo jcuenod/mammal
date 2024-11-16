@@ -1,22 +1,8 @@
-import { useEffect, useState } from "react";
-import {
-  useMessageStore,
-  deleteMessageAndDescendants,
-  setActiveMessage,
-} from "../state/messages";
+import { useContext, useEffect, useState } from "react";
 import db from "../state/db";
-import type { ChatMessage } from "../state/messages";
 import { SearchIcon, XIcon } from "./Icons";
-
-const mostRecentMessageInTree = (messages: ChatMessage[]) => {
-  return messages
-    .sort((a, b) => {
-      const aDate = a.createdAt;
-      const bDate = b.createdAt;
-      return aDate > bDate ? 1 : -1;
-    })
-    .reverse()[0];
-};
+import { MessageContext } from "../state/messageContext";
+import type { MessageStoreContext, ChatMessage } from "../state/messageContext";
 
 const getSearchResults = async (query: string) => {
   return (await db.select(
@@ -48,12 +34,21 @@ const Searchbar = ({ query, setQuery }: SearchbarProps) => (
       value={query}
       onChange={(e) => setQuery(e.target.value)}
     />
-    <button className="absolute w-8 h-8 top-1 right-1 text-slate-500 hover:bg-slate-300 flex items-center justify-center rounded-full active:scale-95"
+    <button
+      className="absolute w-8 h-8 top-1 right-1 text-slate-500 hover:bg-slate-300 flex items-center justify-center rounded-full active:scale-95"
       style={{ pointerEvents: query ? "auto" : "none" }}
       onClick={() => setQuery("")}
     >
-      <SearchIcon className={"absolute w-5 h-5 transition-all" + (!!query && " opacity-0 scale-0")} />
-      <XIcon className={"absolute w-5 h-5 transition-all" + (!query && " opacity-0 scale-0")} />
+      <SearchIcon
+        className={
+          "absolute w-5 h-5 transition-all" + (!!query && " opacity-0 scale-0")
+        }
+      />
+      <XIcon
+        className={
+          "absolute w-5 h-5 transition-all" + (!query && " opacity-0 scale-0")
+        }
+      />
     </button>
   </div>
 );
@@ -69,7 +64,8 @@ const Link = ({ onOpen, onDelete, label }: LinkProps) => (
     href="#"
     onClick={onOpen}
   >
-    <span className="p-4 leading-none truncate"
+    <span
+      className="p-4 leading-none truncate"
       dangerouslySetInnerHTML={{ __html: label }}
     />
     {/* delete button */}
@@ -85,11 +81,62 @@ const Link = ({ onOpen, onDelete, label }: LinkProps) => (
   </a>
 );
 
-// type SecondarySidebarProps = {
-//   setActiveMessage: (threadId: number | null) => void;
-// };
+const LoadingIndicator = ({ show }: { show: boolean }) => {
+  return (
+    <div
+      className="absolute text-center w-full h-full flex justify-center items-center pb-20"
+      style={{
+        backgroundColor: "rgba(255, 255, 255, 0.5)",
+        opacity: show ? 1 : 0,
+        pointerEvents: show ? "auto" : "none",
+        transition: "all 120ms ease-in-out",
+      }}
+    >
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-slate-400"></div>
+    </div>
+  );
+};
+
+const ErrorIndicator = ({
+  show,
+  message,
+}: {
+  show: boolean;
+  message: string;
+}) => {
+  return (
+    <div
+      className="absolute text-center w-full h-full flex justify-center items-start pt-4"
+      style={{
+        backgroundColor: "rgba(255, 255, 255, 0.5)",
+        opacity: show ? 1 : 0,
+        pointerEvents: show ? "auto" : "none",
+        transition: "all 120ms ease-in-out",
+      }}
+    >
+      <div className="bg-red-500 text-red-100 rounded-lg p-4">
+        <div className="border-b-2 border-red-100 text-left pb-2 mb-2 font-bold">
+          Error:
+        </div>
+        {message}
+      </div>
+    </div>
+  );
+};
+
 export const SecondarySidebar = () => {
-  const { threadOps, messageTree } = useMessageStore();
+  const {
+    data,
+    topLevelState: state,
+    topLevelError: error,
+  } = useContext<MessageStoreContext>(MessageContext);
+  const {
+    topLevelMessages: threadOps,
+    setTopLevelMessage,
+    setActiveMessage,
+    removeMessageAndDescendants,
+  } = data;
+
   const [query, setQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<ChatMessage[]>([]);
 
@@ -109,12 +156,12 @@ export const SecondarySidebar = () => {
     }
   }, [query]);
 
-  useEffect(() => {
-    const latestMessage = mostRecentMessageInTree(messageTree);
-    if (latestMessage) {
-      setActiveMessage(latestMessage.treeId);
-    }
-  }, [messageTree]);
+  // useEffect(() => {
+  //   const latestMessage = mostRecentMessageInTree(messageTree);
+  //   if (latestMessage) {
+  //     setActiveMessage(latestMessage.treeId);
+  //   }
+  // }, [messageTree]);
 
   const messageListToUse = query ? searchResults : threadOps;
 
@@ -123,14 +170,16 @@ export const SecondarySidebar = () => {
       <div>
         <Searchbar query={query} setQuery={setQuery} />
       </div>
-      <div className="flex-grow overflow-auto">
+      <div className="flex-grow overflow-auto relative">
+        <ErrorIndicator show={state === "error"} message={error.message} />
+        <LoadingIndicator show={state === "loading"} />
         {messageListToUse.map(({ message, treeId }: ChatMessage) => (
           <Link
             key={treeId}
             label={message}
-            onOpen={() => setActiveMessage(treeId)}
+            onOpen={() => setTopLevelMessage(treeId)}
             onDelete={() => {
-              deleteMessageAndDescendants(treeId);
+              removeMessageAndDescendants(treeId);
             }}
           />
         ))}
