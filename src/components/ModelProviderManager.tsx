@@ -14,7 +14,7 @@ import type {
   ProviderWithModels,
   StoredModel,
   StoredProvider,
-} from "../state/modelProviders";
+} from "../state/modelProviderContext";
 import { knownProviders } from "../fixtures/knownProviders";
 import { ModelProviderContext } from "../state/modelProviderContext";
 import { EditIcon, PlusIcon, XIcon } from "./Icons";
@@ -27,16 +27,19 @@ type addProviderHelperFunction = (
   },
   models: { name: string; model: string }[]
 ) => void;
-const addProviderHelper: addProviderHelperFunction = async (provider, models) => {
-  const providerId = await addProvider(provider)
+const addProviderHelper: addProviderHelperFunction = async (
+  provider,
+  models
+) => {
+  const providerId = await addProvider(provider);
   models.map((model) => {
     addModel({
       name: model.name,
       model: model.model,
       providerId,
-    })
-  })
-}
+    });
+  });
+};
 
 type AddProviderFormProps = {
   onClose: () => void;
@@ -110,9 +113,9 @@ const AddProviderForm = ({ onClose }: AddProviderFormProps) => {
                 name: nameToUse,
                 endpoint: endpointToUse,
                 apiKey,
-              }
-              addProviderHelper(provider, providerToUse?.models || [])
-              onClose()
+              };
+              addProviderHelper(provider, providerToUse?.models || []);
+              onClose();
             }}
           >
             Add Provider
@@ -418,9 +421,7 @@ const Provider = ({
           className="p-2 hover:bg-slate-200 rounded-md w-full flex items-center justify-center active:bg-slate-300"
         >
           <PlusIcon className="w-4 h-4" />
-          <span className="pl-2">
-            Add New Model
-          </span>
+          <span className="pl-2">Add New Model</span>
         </button>
       </div>
     </div>
@@ -471,7 +472,7 @@ export const ModelProviderManager = ({ open }: ModelProviderManagerProps) => {
               setFormState={setFormState}
               deleteProvider={(providerId) => {
                 removeProvider(providerId).then(() => {
-                  refresh()
+                  refresh();
                 });
               }}
             />

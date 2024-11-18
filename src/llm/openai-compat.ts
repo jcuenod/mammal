@@ -14,18 +14,24 @@ export const getResponse = async (
     dangerouslyAllowBrowser: true,
   });
 
-  const stream = client.beta.chat.completions.stream({
-    // @ts-ignore
-    messages,
-    model,
-    stream: true,
-  });
+  try {
+    // TODO: Use stream.controller to kill the request after a timeout...
+    // const {iterator, controller} = stream ...
+    const stream = await client.chat.completions.create({
+      // @ts-ignore
+      messages,
+      model,
+      stream: true,
+    });
 
-  stream.on("content", (_delta, snapshot) => {
-    onChunk(snapshot);
-  });
+    let message = "";
+    for await (const response of stream) {
+      message += response.choices[0]?.delta?.content || "";
+      onChunk(message);
+    }
 
-  stream.on("content.done", ({ content }) => {
-    onDone(content);
-  });
+    onDone(message);
+  } catch (error) {
+    console.error(error);
+  }
 };

@@ -197,16 +197,6 @@ const getSiblings = (treeId: string, messages: ChatMessage[]) => {
   const currentIndex = childrenOfParent.indexOf(treeId);
   const leftSiblings = childrenOfParent.slice(0, currentIndex).reverse();
   const rightSiblings = childrenOfParent.slice(currentIndex + 1);
-  // console.log({
-  //   treeId,
-  //   parentId,
-  //   leftSibling,
-  //   rightSibling,
-  //   indexOfCurrent: currentIndex,
-  //   descendantsOfParent,
-  //   childrenOfParent,
-  //   messages,
-  // });
   return {
     leftSibling: leftSiblings.length > 0 ? leftSiblings[0] : null,
     rightSibling: rightSiblings.length > 0 ? rightSiblings[0] : null,
@@ -351,8 +341,8 @@ export const Content = () => {
         role,
       })),
       {
-        role: "user",
         content: userPrompt,
+        role: "user",
       },
     ];
 

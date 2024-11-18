@@ -158,7 +158,7 @@ export const addMessage = async ({ data, parentId }: AddMessage) => {
     const maxId =
       treeIds
         .map((m) => parseInt(m.treeId))
-        .sort()
+        .sort((a, b) => a - b)
         .pop() || 0;
     return `${maxId + 1}`;
   };

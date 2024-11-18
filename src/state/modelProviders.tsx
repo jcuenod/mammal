@@ -54,6 +54,7 @@ export const addModel = async (model: Model) => {
   if (provider.length === 0) {
     throw new Error(`Provider with id ${model.providerId} does not exist`);
   }
+  console.log("Adding model", model);
   const result = await db.execute(
     `INSERT INTO models (name, model, providerId) VALUES (?, ?, ?)`,
     [model.name, model.model, model.providerId]
@@ -62,15 +63,14 @@ export const addModel = async (model: Model) => {
 };
 
 export const removeModel = async (modelId: number) => {
-  await db.execute(`DELETE FROM models WHERE id = ?`, [modelId]);
+  return await db.execute(`DELETE FROM models WHERE id = ?`, [modelId]);
 };
 
 export const updateModel = async (modelId: number, model: PartialModel) => {
-  await db.execute(`UPDATE models SET name = ?, model = ? WHERE id = ?`, [
-    model.name,
-    model.model,
-    modelId,
-  ]);
+  return await db.execute(
+    `UPDATE models SET name = ?, model = ? WHERE id = ?`,
+    [model.name, model.model, modelId]
+  );
 };
 
 export const getAll = async () => {

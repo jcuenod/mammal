@@ -70,6 +70,7 @@ fn main() {
                 .add_migrations("sqlite:mammal.db", migrations)
                 .build(),
         )
+        .plugin(tauri_plugin_cors_fetch::init())
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
             window.set_size(tauri::Size::Logical(tauri::LogicalSize {

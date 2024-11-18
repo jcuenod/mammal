@@ -1,10 +1,16 @@
 import { getResponse as openAiCompat } from "./openai-compat";
 import { getResponse as anthropic } from "./anthropic";
+import { getResponse as gemini } from "./gemini";
 
 const patternMatching = [
   {
     match: (url: string) => /^https:\/\/api.anthropic\.com\//.test(url),
     function: anthropic,
+  },
+  {
+    match: (url: string) =>
+      /^https:\/\/generativelanguage\.googleapis\.com\//.test(url),
+    function: gemini,
   },
   {
     match: () => true,
@@ -21,11 +27,7 @@ export const getResponse = (
   onDone: (finalResponse: string) => void
 ) => {
   for (const p of patternMatching) {
-    console.log(p);
-    console.log(baseURL);
-    console.log(p.match(baseURL));
     if (p.match(baseURL)) {
-      console.log("here");
       return p.function(apiKey, baseURL, model, messages, onChunk, onDone);
     }
   }
