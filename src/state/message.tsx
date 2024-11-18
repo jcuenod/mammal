@@ -99,7 +99,8 @@ const getTopLevelMessages = async () => {
                 ELSE treeId
             END AS threadOpId
         FROM messages
-      )`
+      )
+     ORDER BY createdAt DESC`
     )) as {
       treeId: string;
       role: string;
