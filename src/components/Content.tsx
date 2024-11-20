@@ -1,5 +1,4 @@
 import {
-  ChatMessage,
   ChatMessageRole,
   MessageContext,
   MessageStoreContext,
@@ -13,9 +12,10 @@ import remarkGfm from "remark-gfm";
 import "./Content.css";
 import { getAll } from "../state/modelProviders";
 import { LeftChevronIcon, RefreshIcon, RightChevronIcon } from "./Icons";
-import { UserIcon, AssistantIcon, SendIcon } from "./Icons";
+import { UserIcon, AssistantIcon } from "./Icons";
 import MPTreeNode from "../treebeard/src/MPTreeNode";
 import { ModelSettingsContext } from "../state/modelSettingsContext";
+import { Chatbox } from "./ChatBox";
 
 const getParentId = (treeId: string) =>
   treeId.split(".").slice(0, -1).join(".");
@@ -386,77 +386,51 @@ export const Content = () => {
   };
 
   return (
-    <div className="flex flex-col flex-grow h-full">
+    <div className="flex flex-col relative flex-grow h-full">
       <Navbar
         selectedProviderId={selectedProviderId}
         selectedModelId={selectedModelId}
         selectProvider={selectProvider}
         selectModel={selectModel}
       />
-      <div
-        className="p-6 flex flex-grow flex-col-reverse overflow-auto bg-slate-100"
-        ref={scrollRef}
-      >
-        {/* spacer for when there are too few messages to fill the screen */}
-        <div className="flex-grow" />
-        {/* messages */}
-        {[...messages].reverse().map((m) => (
-          <Message
-            key={m.treeId}
-            treeId={m.treeId}
-            busy={busy}
-            getSiblings={m.getSiblings}
-            name={m.name}
-            role={m.role as ChatMessageRole}
-            markdown={m.message}
-            activeMessage={activeMessage}
-            setActiveMessage={(treeId) => setActiveMessage(treeId)}
-            onRegenerate={() => {
-              if (m.role === "assistant") {
-                onRegenerate(getParentId(m.treeId));
-              } else {
-                console.error(
-                  "onRegenerate not defined for user/system messages"
-                );
-              }
-            }}
-          />
-        ))}
-        {/* spacer */}
-        <div className="h-6">&nbsp;</div>
-      </div>
-      {/* chat box at the bottom */}
-      <div className="flex items-center w-full bg-slate-100 px-6 py-4 relative">
-        <textarea
-          className="flex-grow pl-6 pr-12 py-4 border-0 bg-white rounded-lg focus:ring-2 focus:ring-blue-600"
-          style={{
-            height:
-              2 +
-              Math.max(
-                1.5,
-                Math.min(textInputValue.split("\n").length * 1.5, 20)
-              ) +
-              "rem",
-          }}
-          placeholder="Type a message..."
-          value={textInputValue}
-          onChange={(e) => setTextInputValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              onSubmit();
-            }
-          }}
-          ref={chatboxRef}
+      <div className="h-full overflow-auto bg-slate-100" ref={scrollRef}>
+        {/* chat box at the bottom */}
+        <Chatbox
+          busy={busy}
+          textInputValue={textInputValue}
+          setTextInputValue={setTextInputValue}
+          onSubmit={onSubmit}
+          chatboxRef={chatboxRef}
         />
-        <button
-          type="button"
-          className="absolute right-8 top-6 flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:bg-blue-100 hover:text-blue-600 active:scale-95"
-          onClick={onSubmit}
-          disabled={busy}
-        >
-          <SendIcon className="w-6 h-6" />
-        </button>
+
+        {/* message thread (col-reverse) intuitively keeps scrollbar at the bottom */}
+        <div className="p-6 flex flex-col-reverse mb-16">
+          {/* spacer for when there are too few messages to fill the screen */}
+          <div className="flex-grow" />
+          {/* messages */}
+          {[...messages].reverse().map((m) => (
+            <Message
+              key={m.treeId}
+              treeId={m.treeId}
+              busy={busy}
+              getSiblings={m.getSiblings}
+              name={m.name}
+              role={m.role as ChatMessageRole}
+              markdown={m.message}
+              activeMessage={activeMessage}
+              setActiveMessage={(treeId) => setActiveMessage(treeId)}
+              onRegenerate={() => {
+                if (m.role === "assistant") {
+                  onRegenerate(getParentId(m.treeId));
+                } else {
+                  console.error(
+                    "onRegenerate not defined for user/system messages"
+                  );
+                }
+              }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
