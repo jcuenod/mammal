@@ -34,7 +34,7 @@ const GhostButton = ({
 }: GhostButtonProps) => (
   <button
     type="button"
-    className="flex justify-center items-center p-1 w-8 h-8 text-slate-600 cursor-pointer disabled:hover:bg-transparent hover:bg-slate-200 hover:text-slate-700 disabled:text-slate-300 rounded"
+    className="flex justify-center items-center p-1 w-6 h-6 text-slate-600 cursor-pointer disabled:hover:bg-transparent hover:bg-slate-200 hover:text-slate-700 disabled:text-slate-300 rounded"
     style={{ pointerEvents: disabled ? "none" : "auto", ...style }}
     onClick={onClick}
     disabled={disabled}
@@ -55,9 +55,9 @@ const DirectionButton = ({
   return (
     <GhostButton onClick={onClick} disabled={disabled}>
       {direction === "left" ? (
-        <LeftChevronIcon className="w-8 h-8" />
+        <LeftChevronIcon className="w-6 h-6" />
       ) : (
-        <RightChevronIcon className="w-8 h-8" />
+        <RightChevronIcon className="w-6 h-6" />
       )}
     </GhostButton>
   );
@@ -156,18 +156,22 @@ const Message = ({
   return (
     <div
       className={
-        "flex w-full p-6 mb-2 bg-white rounded-lg"
+        "flex w-full p-6 mb-2 bg-white rounded-lg shadow-sm"
         // + (activeMessage === treeId ? " border-2 border-slate-400" : " border-2 border-white")
       }
     >
       {/* <img className="w-10 h-10 rounded-full" src={avatar} alt={name} /> */}
-      <div className="w-10 h-10 min-w-10 rounded-full bg-blue-100 flex items-center justify-center">
-        {role === "user" ? <UserIcon /> : <AssistantIcon />}
+      <div className="w-10 h-10 min-w-10 rounded-full bg-blue-100 text-slate-700 flex items-center justify-center">
+        {role === "user" ? (
+          <UserIcon className="w-7 h-7" />
+        ) : (
+          <AssistantIcon className="w-7 h-7" />
+        )}
       </div>
       <div className="flex flex-col ml-4 markdown-body w-full">
         {/* space between flex items in row */}
-        <div className="flex flex-row justify-between">
-          <span className="font-bold">{name}</span>
+        <div className="flex flex-row justify-between items-center mb-1">
+          <span className="font-bold text-slate-700">{name}</span>
           <div className="flex flex-row justify-center items-center">
             {role === "assistant" && (
               <AssistantButtons
@@ -179,7 +183,7 @@ const Message = ({
               />
             )}
           </div>
-        </div>{" "}
+        </div>
         <Markdown remarkPlugins={[remarkGfm]}>{markdown}</Markdown>
       </div>
     </div>
@@ -424,7 +428,7 @@ export const Content = () => {
       {/* chat box at the bottom */}
       <div className="flex items-center w-full bg-slate-100 px-6 py-4 relative">
         <textarea
-          className="flex-grow pl-6 pr-12 py-4 border-0 bg-white rounded-lg"
+          className="flex-grow pl-6 pr-12 py-4 border-0 bg-white rounded-lg focus:ring-2 focus:ring-blue-600"
           style={{
             height:
               2 +
@@ -447,7 +451,7 @@ export const Content = () => {
         />
         <button
           type="button"
-          className="absolute right-8 top-6 flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:bg-slate-200 hover:text-slate-500 active:scale-95"
+          className="absolute right-8 top-6 flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:bg-blue-100 hover:text-blue-600 active:scale-95"
           onClick={onSubmit}
           disabled={busy}
         >

@@ -16,7 +16,13 @@ const SidebarLink = ({ isActive, Icon, onClick }: LinkProps) => (
     href="#"
     onClick={onClick}
   >
-    <Icon className="w-5 h-5" />
+    <Icon
+      className="w-5 h-5"
+      style={{
+        transform: isActive ? "scale(1.2)" : "",
+        transition: "transform 120ms ease-in-out",
+      }}
+    />
   </a>
 );
 
@@ -27,7 +33,7 @@ type SidebarProps = {
 export const Sidebar = ({ state, setSidebarState }: SidebarProps) => (
   <>
     <a
-      className="flex items-center justify-center flex-shrink-0 w-full h-16 bg-slate-300"
+      className="flex items-center justify-center flex-shrink-0 w-full h-16 bg-blue-200 text-blue-900"
       href="#"
     >
       <MammalIcon className="w-8 h-8" />

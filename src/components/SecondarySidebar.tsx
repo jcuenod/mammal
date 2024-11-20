@@ -38,7 +38,7 @@ const Searchbar = ({ query, setQuery }: SearchbarProps) => (
   <div className="relative">
     <input
       type="text"
-      className="w-full h-10 px-4 mb-4 text-sm border-0 rounded-full bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="w-full h-10 px-4 mb-4 text-sm border-0 rounded-full bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
       placeholder="Search..."
       value={query}
       onChange={(e) => setQuery(e.target.value)}

@@ -9,15 +9,17 @@
 // THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 export type IconProps = {
-  className: string;
+  className?: string;
+  style?: React.CSSProperties;
 };
 
 // TODO: Figure out licensing on this icon (it's not from lucide)...
-export const MammalIcon = ({ className }: { className?: string }) => (
+export const MammalIcon = ({ className, style }: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 6000 6000"
     className={className}
+    style={style}
+    viewBox="0 0 6000 6000"
   >
     <g fill="currentColor">
       <path d="M4362 4610c-416-58-764-348-885-736-52-165-59-250-66-779-6-490-6-490-35-553-47-101-130-162-222-162-47 0-132 48-165 92-15 22-39 66-51 97-23 56-23 56-26 1024-2 967-2 967-490 965-487-3-487-3-492-643-5-623-6-641-26-680-76-148-324-150-421-3-28 42-28 42-33 687-3 355-7 647-8 649-1 1-205 2-452 2-451 0-451 0-448-792 4-893-1-836 83-1003 112-223 336-382 638-452 53-12 119-17 252-17 161 1 190 3 276 26 52 14 129 39 169 56 75 29 75 29 91-67 26-149 71-261 158-393 184-279 499-496 826-569 92-21 342-18 440 5 376 87 644 321 753 656 68 206 83 357 87 830 2 294 7 419 19 490 55 344 196 498 372 407 38-20 97-84 122-134 48-93 70-236 53-333-8-47-7-59 8-80 72-104 501-152 596-67 50 45 85 309 66 488-54 497-356 871-786 974-82 20-310 28-403 15z" />
@@ -26,10 +28,11 @@ export const MammalIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export const HomeIcon = ({ className }: { className?: string }) => (
+export const HomeIcon = ({ className, style }: IconProps) => (
   <svg
-    className={className}
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={style}
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -43,10 +46,11 @@ export const HomeIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export const SearchIcon = ({ className }: { className?: string }) => (
+export const SearchIcon = ({ className, style }: IconProps) => (
   <svg
-    className={className}
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={style}
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -59,10 +63,11 @@ export const SearchIcon = ({ className }: { className?: string }) => (
     />
   </svg>
 );
-export const AnalyticsIcon = () => (
+export const AnalyticsIcon = ({ className, style }: IconProps) => (
   <svg
-    className="w-6 h-6 strokeCurrent"
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={style}
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -75,10 +80,11 @@ export const AnalyticsIcon = () => (
     />
   </svg>
 );
-export const DocumentsIcon = () => (
+export const DocumentsIcon = ({ className, style }: IconProps) => (
   <svg
-    className="w-6 h-6 strokeCurrent"
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={style}
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -92,10 +98,11 @@ export const DocumentsIcon = () => (
   </svg>
 );
 
-export const ProductsIcon = () => (
+export const ProductsIcon = ({ className, style }: IconProps) => (
   <svg
-    className="w-6 h-6 strokeCurrent"
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={style}
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -109,34 +116,33 @@ export const ProductsIcon = () => (
   </svg>
 );
 
-export const SettingsIcon = ({ className }: { className?: string }) => (
+export const SettingsIcon = ({ className, style }: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={className}
   >
     <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
-
-export const Settings2Icon = ({ className }: { className?: string }) => (
+export const Settings2Icon = ({ className, style }: IconProps) => (
   <svg
+    className={className}
+    style={style}
     xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={className}
   >
     <path d="M20 7h-9" />
     <path d="M14 17H5" />
@@ -144,10 +150,11 @@ export const Settings2Icon = ({ className }: { className?: string }) => (
     <circle cx="7" cy="7" r="3" />
   </svg>
 );
-export const MessagesIcon = () => (
+export const MessagesIcon = ({ className, style }: IconProps) => (
   <svg
-    className="w-6 h-6 strokeCurrent"
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={style}
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -161,59 +168,61 @@ export const MessagesIcon = () => (
   </svg>
 );
 
-export const EditIcon = ({ className }: { className?: string }) => (
+export const EditIcon = ({ className, style }: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={className}
   >
     <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
     <path d="m15 5 4 4" />
   </svg>
 );
-export const DeleteIcon = ({ className }: { className: string }) => (
+export const DeleteIcon = ({ className, style }: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={className}
   >
     <path d="M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z" />
     <path d="m12 9 6 6" />
     <path d="m18 9-6 6" />
   </svg>
 );
-export const XIcon = ({ className }: { className?: string }) => (
+export const XIcon = ({ className, style }: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
+    className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={className}
   >
     <path d="M18 6 6 18" />
     <path d="m6 6 12 12" />
   </svg>
 );
 
-export const PlusIcon = ({ className }: { className?: string }) => (
+export const PlusIcon = ({ className, style }: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -226,23 +235,17 @@ export const PlusIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export const RefreshIcon = ({
-  className,
-  style,
-}: {
-  className?: string;
-  style?: React.CSSProperties;
-}) => (
+export const RefreshIcon = ({ className, style }: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={className}
-    style={style}
   >
     <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
     <path d="M21 3v5h-5" />
@@ -251,80 +254,81 @@ export const RefreshIcon = ({
   </svg>
 );
 
-export const LeftChevronIcon = ({ className }: { className?: string }) => (
+export const LeftChevronIcon = ({ className, style }: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={className}
   >
     <path d="m15 18-6-6 6-6" />
   </svg>
 );
-export const RightChevronIcon = ({ className }: { className?: string }) => (
+export const RightChevronIcon = ({ className, style }: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={className}
   >
     <path d="m9 18 6-6-6-6" />
   </svg>
 );
 
-export const ChevronsUpDownIcon = ({ className }: { className?: string }) => (
+export const ChevronsUpDownIcon = ({ className, style }: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={className}
   >
     <path d="m7 15 5 5 5-5" />
     <path d="m7 9 5-5 5 5" />
   </svg>
 );
 
-export const UserIcon = () => (
+export const UserIcon = ({ className, style }: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
+    className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="w-7 h-7"
   >
     <circle cx="12" cy="8" r="5" />
     <path d="M20 21a8 8 0 0 0-16 0" />
   </svg>
 );
-export const AssistantIcon = () => (
+export const AssistantIcon = ({ className, style }: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
+    className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="w-7 h-7"
   >
     <path d="M12 8V4H8" />
     <rect width="16" height="12" x="4" y="8" rx="2" />
@@ -334,18 +338,17 @@ export const AssistantIcon = () => (
     <path d="M9 13v2" />
   </svg>
 );
-export const SendIcon = ({ className }: { className?: string }) => (
+export const SendIcon = ({ className, style }: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
+    className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={className}
   >
     <path d="M3.714 3.048a.498.498 0 0 0-.683.627l2.843 7.627a2 2 0 0 1 0 1.396l-2.842 7.627a.498.498 0 0 0 .682.627l18-8.5a.5.5 0 0 0 0-.904z" />
     <path d="M6 12h16" />
