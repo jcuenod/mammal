@@ -481,7 +481,7 @@ export const ModelProviderManager = ({ open }: ModelProviderManagerProps) => {
 
   return (
     <div
-      className="absolute inset-0 bg-white items-center justify-center px-6 flex h-full"
+      className="absolute inset-0 bg-white items-center justify-center px-6 flex h-full z-20"
       style={{
         opacity: open ? "1" : "0",
         transform: open ? "translateX(0)" : "translateX(5%)",
