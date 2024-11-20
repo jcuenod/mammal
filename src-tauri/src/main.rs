@@ -15,18 +15,16 @@ fn main() {
                     id INTEGER PRIMARY KEY AUTOINCREMENT, 
                     path TEXT UNIQUE, 
                     data JSON -- TODO: depth INTEGER GENERATED ALWAYS AS (LENGTH(path) - LENGTH(REPLACE(path, '.', '')) + 1) STORED
-                    );
+                );
                 CREATE INDEX idx_messages_path ON messages(path);
                 -- TODO: CREATE INDEX idx_nodes_depth ON nodes(depth);
 
-                CREATE VIEW message_view AS (
-                    SELECT 
+                CREATE VIEW message_view AS SELECT 
                     id, 
                     path, 
                     json_extract(data, '$.message') AS message 
-                    FROM 
+                FROM
                     messages;
-                )
 
                 CREATE VIRTUAL TABLE messages_fts USING fts5(
                     id UNINDEXED, path UNINDEXED, message, 
