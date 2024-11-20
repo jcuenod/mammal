@@ -16,6 +16,7 @@ const MenuOption = ({ active, label, onClick }: MenuOption) => (
       (active ? "bg-slate-200 hover:bg-slate-300" : "hover:bg-slate-200")
     }
     onClick={onClick}
+    tabIndex={0} // make it focusable
   >
     {label}
   </a>
@@ -29,11 +30,18 @@ const Dropdown = ({ selectedOptionIndex, menuOptions }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="relative mx-2 text-sm group">
+    <div className="relative mx-2 text-sm">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        // we need setTimeout here to allow the event to fire on the submenu
-        onBlur={() => setTimeout(() => setIsOpen(false), 120)}
+        onBlur={(e) => {
+          // only close if e.relatedTarget is not a child of the dropdown menu
+          // this is to prevent the dropdown from closing when clicking on a menu item
+          const $dropdownSubmenu = e.currentTarget.nextElementSibling;
+          const contains = $dropdownSubmenu?.contains(e.relatedTarget as Node);
+          if (!contains) {
+            setIsOpen(false);
+          }
+        }}
         className="flex items-center h-10 px-4 rounded hover:bg-slate-200 active:bg-slate-400"
       >
         <div>{menuOptions[selectedOptionIndex]?.label || "Select"}</div>
@@ -127,9 +135,7 @@ export const Navbar = ({
       id: model.id,
       active: model.id === selectedModelId,
       label: model.name,
-      onClick: () => {
-        selectModel(model.id);
-      },
+      onClick: () => selectModel(model.id),
     }));
 
   const selectedProviderIndex =
