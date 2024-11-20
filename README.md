@@ -42,3 +42,18 @@ It is also possible to search your conversations for specific content. The searc
 - SQLite
 
 Honestly, very few dependencies.
+
+# Building
+
+1. Clone the repository
+2. `npm install`
+3. `npm run tauri build`
+
+For development, you can use `npm run tauri dev`.
+
+You will need rust and nodejs installed.
+
+# Contributing
+
+Contributions are welcome. Please open an issue or a PR.
+You will need to sign the CLA.
