@@ -393,7 +393,10 @@ export const Content = () => {
         selectProvider={selectProvider}
         selectModel={selectModel}
       />
-      <div className="h-full overflow-auto bg-slate-100" ref={scrollRef}>
+      <div
+        className="flex flex-col-reverse h-full overflow-auto bg-slate-100"
+        ref={scrollRef}
+      >
         {/* chat box at the bottom */}
         <Chatbox
           busy={busy}
