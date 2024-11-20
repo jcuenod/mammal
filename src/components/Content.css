@@ -9,3 +9,6 @@
 .no-anchors * {
     overflow-anchor: none;
 }
+.markdown-body pre>code {
+    white-space: pre-wrap;
+}

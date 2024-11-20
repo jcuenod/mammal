@@ -15,7 +15,7 @@ export const Chatbox = ({
   chatboxRef,
 }: ChatboxProps) => (
   <div
-    className="flex items-center bg-slate-100 m-5 shadow-2xl"
+    className="flex items-center bg-slate-100 m-5 shadow-2xl z-10"
     style={{
       position: "absolute",
       bottom: 0,
