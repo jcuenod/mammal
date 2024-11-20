@@ -4,190 +4,118 @@ import type {
   MessageStoreContext,
   AddMessage,
   MessageStoreLoadingState,
+  MessageThread,
 } from "./messageContext";
 import db from "./db";
 import { ChatMessage } from "./messageContext";
-// import { computed } from "./zustandCompute";
+import MPTree from "../treebeard/src/MPTree";
+import type { MPTreeNodeWithChildren } from "../treebeard/src/MPTreeNode";
 
-const mapRowToChatMessage = (row: any): ChatMessage => {
-  const metadata = JSON.parse(row.metadata);
-  return {
-    treeId: row.treeId,
-    role: row.role,
-    name: row.name,
-    createdAt: row.createdAt,
-    message: row.message,
-    metadata,
-  };
-};
-
-const isNodeAncestorOf = (nodeTreeId: string, potentialAncestor: string) => {
-  return (
-    nodeTreeId.includes(potentialAncestor) &&
-    nodeTreeId.split(".").length > potentialAncestor.split(".").length
-  );
-};
-
-const getAncestorsOf = (
-  nodeTreeId: string,
-  tree: ChatMessage[],
-  includeSelf: boolean = true
-) =>
-  tree
-    .filter(
-      (m) =>
-        isNodeAncestorOf(nodeTreeId, m.treeId) ||
-        (includeSelf && m.treeId === nodeTreeId)
-    )
-    .sort((a, b) => a.treeId.length - b.treeId.length);
-
-const mapTreeToThread = (
-  tree: ChatMessage[],
-  activeMessageId: string
-): ChatMessage[] => {
-  // we use the id to get all parents and then for children we select the highest createdAt
-  // Initialize with parents of activeMessageId
-  const threadMessages = getAncestorsOf(activeMessageId, tree);
-
-  if (!threadMessages.length) {
-    return [];
-  }
-  let lastMessage: string;
-  while (true && threadMessages.length > 0) {
-    lastMessage = threadMessages[threadMessages.length - 1].treeId;
-
-    const descendantsOfLast = tree.filter((m) =>
-      isNodeAncestorOf(m.treeId, lastMessage)
-    );
-    if (descendantsOfLast.length === 0) {
-      break;
-    }
-
-    // get last createdAt
-    const mostRecentDescendant = descendantsOfLast.reduce((acc, m) => {
-      if (m.createdAt > acc.createdAt) {
-        acc = m;
+const dboperations = {
+  select: db.select,
+  execute: (query: string, params?: unknown[]) =>
+    new Promise<void>(async (resolve, reject) => {
+      try {
+        await db.execute(query, params);
+        resolve();
+      } catch (e) {
+        console.error(e);
+        reject(e);
       }
-      return acc;
-    }, descendantsOfLast[0]);
-
-    threadMessages.push(
-      ...getAncestorsOf(mostRecentDescendant.treeId, descendantsOfLast)
-    );
-  }
-  return threadMessages.sort((a, b) => a.treeId.length - b.treeId.length);
+    }),
 };
 
-const getThreadOpId = (treeId: string) => {
+const messageMPTree = new MPTree(
+  "messages",
+  dboperations.select,
+  dboperations.execute
+);
+
+const getRootPath = (treeId: string) => {
   return treeId.split(".")[0];
 };
 
-const getTopLevelMessages = async () => {
-  return (
-    (await db.select(
-      `SELECT
-       treeId,
-       role,
-       name,
-       createdAt,
-       message,
-       metadata
-     FROM messages WHERE treeId IN (
-        SELECT DISTINCT 
-            CASE
-                WHEN INSTR(treeId, '.') > 0 THEN SUBSTR(treeId, 1, INSTR(treeId, '.') - 1)
-                ELSE treeId
-            END AS threadOpId
-        FROM messages
-      )
-     ORDER BY createdAt DESC`
-    )) as {
-      treeId: string;
-      role: string;
-      name: string;
-      createdAt: string;
-      message: string;
-      metadata: string;
-    }[]
-  ).map(mapRowToChatMessage);
-};
-
-const getTree = async (topLevelId: string) =>
-  (
-    (await db.select(
-      `SELECT
-         treeId,
-         role,
-         name,
-         createdAt,
-         message,
-         metadata
-       FROM messages WHERE treeId LIKE ? OR treeId LIKE ?`,
-      [topLevelId, `${topLevelId}.%`]
-    )) as {
-      treeId: string;
-      role: string;
-      name: string;
-      createdAt: string;
-      message: string;
-      metadata: string;
-    }[]
-  ).map(mapRowToChatMessage);
-
-export const addMessage = async ({ data, parentId }: AddMessage) => {
-  // if replyTo is provided, we need to find the max immediate descendant of the replyTo message and increment by 1 for this treeId
-  // otherwise, we need to find the max top-level message and increment by 1 for this treeId
-  const { name, role, message, metadata } = data;
-  const getNewDescendantId = async (parentId: string) => {
-    const treeIds = (await db.select(
-      `SELECT treeId FROM messages WHERE treeId LIKE '${parentId}.%'`
-    )) as { treeId: string }[];
-    const maxId =
-      treeIds
-        .map((m) => m.treeId.split(".").pop())
-        .filter((m) => m !== undefined)
-        .map((m) => parseInt(m))
-        .sort()
-        .pop() || 0;
-    return `${parentId}.${maxId + 1}`;
+const mapTreeToThread = (
+  tree: MPTreeNodeWithChildren,
+  activeMessageId: string
+): MessageThread[] => {
+  const pathIsAncestorOf = (path1: string, path2: string) => {
+    return (
+      path2.startsWith(path1) &&
+      path2.split(".").length > path1.split(".").length
+    );
   };
-  const getNewTopLevelId = async () => {
-    const treeIds = (await db.select(
-      `SELECT treeId FROM messages WHERE treeId NOT LIKE '%.%'`
-    )) as { treeId: string }[];
-    const maxId =
-      treeIds
-        .map((m) => parseInt(m.treeId))
-        .sort((a, b) => a - b)
-        .pop() || 0;
-    return `${maxId + 1}`;
-  };
-  const newTreeId = parentId
-    ? await getNewDescendantId(parentId)
-    : await getNewTopLevelId();
-  await db.execute(
-    `INSERT INTO messages (treeId, name, role, createdAt, message, metadata) VALUES ($1, $2, $3, $4, $5, $6)`,
-    [
-      newTreeId,
-      name,
-      role,
-      new Date().toISOString(),
-      message,
-      JSON.stringify(metadata || {}),
-    ]
-  );
-  return newTreeId;
-};
 
-const removeMessageAndDescendants = async (
-  treeId: string,
-  callback: () => void
-) => {
-  await db.execute(`DELETE FROM messages WHERE treeId = ? OR treeId LIKE ?`, [
-    treeId,
-    `${treeId}.%`,
-  ]);
-  callback();
+  const gatherAncestorsAndSelf: (
+    accumulator: MPTreeNodeWithChildren[],
+    mp: MPTreeNodeWithChildren,
+    descendant: string
+  ) => MPTreeNodeWithChildren[] = (
+    accumulator: MPTreeNodeWithChildren[] = [],
+    mp: MPTreeNodeWithChildren,
+    descendant: string
+  ) => {
+    const { node, children } = mp;
+    if (pathIsAncestorOf(node.path, descendant) || node.path === descendant) {
+      return [
+        ...accumulator,
+        mp,
+        ...children
+          .map((c) => gatherAncestorsAndSelf([], c, descendant))
+          .flat(),
+      ];
+    }
+    return accumulator;
+  };
+  const orderedAncestors = gatherAncestorsAndSelf([], tree, activeMessageId);
+
+  const threadMessages: MessageThread[] = orderedAncestors.map((a) => ({
+    treeId: a.node.path,
+    role: a.node.data.role,
+    name: a.node.data.name,
+    createdAt: a.node.data.createdAt,
+    message: a.node.data.message,
+    metadata: a.node.data.metadata,
+    getSiblings: async (includeSelf: boolean) =>
+      a.node.getSiblings(includeSelf),
+  }));
+
+  // Now we check whether the active message is in the tree
+  // If it's not, that probably means we haven't refreshed the tree yet
+  // It also means there's not point in looking for descendants
+  const lastMessage = orderedAncestors?.[orderedAncestors.length - 1];
+  if (lastMessage?.node.path !== activeMessageId) {
+    return threadMessages;
+  }
+  const activeMessage = lastMessage;
+
+  // traverse into active message's descendants and push each message onto the thread
+  const traverseDescendants = (mp: MPTreeNodeWithChildren) => {
+    const { children } = mp;
+    if (children.length === 0) {
+      return;
+    }
+    // get the most recent child
+    const mostRecentChild = children.reduce(
+      (acc, child) =>
+        child.node.data.createdAt > acc.node.data.createdAt ? child : acc,
+      children[0]
+    );
+    threadMessages.push({
+      treeId: mostRecentChild.node.path,
+      role: mostRecentChild.node.data.role,
+      name: mostRecentChild.node.data.name,
+      createdAt: mostRecentChild.node.data.createdAt,
+      message: mostRecentChild.node.data.message,
+      metadata: mostRecentChild.node.data.metadata,
+      getSiblings: async (includeSelf) =>
+        mostRecentChild.node.getSiblings(includeSelf),
+    });
+    traverseDescendants(mostRecentChild);
+  };
+  traverseDescendants(activeMessage);
+
+  return threadMessages.sort((a, b) => a.treeId.length - b.treeId.length);
 };
 
 const MessageProviderContextWrapper = ({
@@ -198,7 +126,9 @@ const MessageProviderContextWrapper = ({
   const [activeMessage, setActiveMessage] = useState<string | null>(null);
   const [updateActiveFlag, setUpdateActiveFlag] = useState<boolean>(false);
   const [topLevelMessages, setTopLevelMessages] = useState<ChatMessage[]>([]);
-  const [messageTree, setMessageTree] = useState<ChatMessage[]>([]);
+  const [messageTree, setMessageTree] = useState<MPTreeNodeWithChildren | null>(
+    null
+  );
   const [topLevelContextState, setTopLevelContextState] =
     useState<MessageStoreLoadingState>("init");
   const [messageContextState, setMessageContextState] =
@@ -206,89 +136,98 @@ const MessageProviderContextWrapper = ({
   const [messageErrorMessage, setMessageErrorMessage] = useState<string>("");
   const [topLevelErrorMessage, setTopLevelErrorMessage] = useState<string>("");
 
+  const messageThread =
+    messageTree !== null && activeMessage !== null
+      ? mapTreeToThread(messageTree, activeMessage)
+      : [];
+
   const refreshTopLevelMessages = (activeMessage: string | null) => {
     setTopLevelContextState("loading");
-    getTopLevelMessages()
-      .then((messages) => {
-        setTopLevelMessages(messages);
-        setTopLevelContextState("ready");
-        if (activeMessage === null && messages.length > 0) {
-          const activeMessageTopLevelId = getThreadOpId(messages[0].treeId);
-          if (!messages.some((m) => m.treeId === activeMessageTopLevelId)) {
-            setActiveMessage(messages[0].treeId);
-          }
+    messageMPTree.getRootNodes().then((nodes) => {
+      setTopLevelMessages(
+        nodes.map((n) => ({
+          treeId: n.path,
+          role: n.data.role,
+          name: n.data.name,
+          createdAt: n.data.createdAt,
+          message: n.data.message,
+          metadata: n.data.metadata,
+        }))
+      );
+      setTopLevelContextState("ready");
+      if (activeMessage === null && nodes.length > 0) {
+        const activeMessageTopLevelId = nodes[0].path;
+        if (!nodes.some((n) => n.path === activeMessageTopLevelId)) {
+          setActiveMessage(activeMessageTopLevelId);
         }
-      })
-      .catch((e) => {
-        console.error(e);
-        setTopLevelContextState("error");
-        setTopLevelErrorMessage(JSON.stringify(e));
-      });
+      }
+    });
   };
 
-  const refreshMessages = (activeMessage: string | null) => {
+  const refreshMessages = async (activeMessage: string | null) => {
     if (activeMessage) {
       setMessageContextState("loading");
-      getTree(getThreadOpId(activeMessage))
-        .then((tree) => {
-          setMessageTree(tree);
-          setMessageContextState("ready");
-        })
-        .catch((e) => {
-          console.error(e);
-          setMessageContextState("error");
-          setMessageErrorMessage(JSON.stringify(e));
-        });
-    } else {
-      setMessageTree([]);
-      setMessageContextState("ready");
+      const rootPath = getRootPath(activeMessage);
+      const tree = await messageMPTree.getTree(rootPath);
+      if (tree) {
+        setMessageTree(tree);
+        setMessageContextState("ready");
+        return;
+      }
     }
+    setMessageTree(null);
+    setMessageContextState("ready");
   };
 
   useEffect(() => refreshTopLevelMessages(activeMessage), []);
 
-  useEffect(() => refreshMessages(activeMessage), [activeMessage]);
-
   useEffect(() => {
-    if (updateActiveFlag && messageTree.length > 0) {
-      const mostRecentMessage = messageTree.reduce((acc, m) => {
-        if (m.createdAt > acc.createdAt) {
-          acc = m;
-        }
-        return acc;
-      }, messageTree[0]);
+    if (updateActiveFlag && messageThread.length > 0) {
+      console.log("Updating active message");
+      const mostRecentMessage = messageThread[messageThread.length - 1];
       setActiveMessage(mostRecentMessage.treeId);
       setUpdateActiveFlag(false);
     }
-  }, [messageTree]);
+  }, [messageThread]);
+
+  useEffect(() => {
+    refreshMessages(activeMessage);
+  }, [activeMessage]);
 
   const context: MessageStoreContext = {
     data: {
       topLevelMessages,
       activeMessage,
-      threadOpId: activeMessage ? getThreadOpId(activeMessage) : null,
+      threadOpId: activeMessage ? getRootPath(activeMessage) : null,
       messageTree,
-      messageThread: activeMessage
-        ? mapTreeToThread(messageTree, activeMessage)
-        : [],
+      messageThread,
       setTopLevelMessage: (treeId: string) => {
         setUpdateActiveFlag(true);
         setActiveMessage(treeId);
       },
       setActiveMessage,
-      addMessage: async (m: AddMessage) => {
-        const newId = await addMessage(m);
-        // (async () => {
-        refreshTopLevelMessages(newId);
-        // })();
-        setActiveMessage(newId);
-        return newId;
+      addMessage: async ({ data, parentId }: AddMessage) => {
+        // const newId = await addMessage(m);
+        let newNode;
+        if (parentId) {
+          const parentNode = await messageMPTree.getNode(parentId);
+          newNode = await parentNode?.addChild(data);
+        } else {
+          newNode = await messageMPTree.addRoot(data);
+        }
+        if (!newNode) {
+          console.error("Failed to add message");
+          return null;
+        }
+
+        refreshTopLevelMessages(newNode.path);
+        setActiveMessage(newNode.path);
+        return newNode.path;
       },
-      removeMessageAndDescendants: (treeId: string) => {
-        removeMessageAndDescendants(treeId, () => {
-          refreshTopLevelMessages(activeMessage);
-          refreshMessages(activeMessage);
-        });
+      removeMessageAndDescendants: async (treeId: string) => {
+        await messageMPTree.deleteNode(treeId);
+        refreshTopLevelMessages(activeMessage);
+        refreshMessages(activeMessage);
       },
     },
     messageState: messageContextState,

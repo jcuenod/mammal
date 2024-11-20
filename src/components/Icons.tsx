@@ -8,9 +8,27 @@
 
 // THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-export const HomeIcon = () => (
+export type IconProps = {
+  className: string;
+};
+
+// TODO: Figure out licensing on this icon (it's not from lucide)...
+export const MammalIcon = ({ className }: { className?: string }) => (
   <svg
-    className="w-6 h-6 strokeCurrent"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 6000 6000"
+    className={className}
+  >
+    <g fill="currentColor">
+      <path d="M4362 4610c-416-58-764-348-885-736-52-165-59-250-66-779-6-490-6-490-35-553-47-101-130-162-222-162-47 0-132 48-165 92-15 22-39 66-51 97-23 56-23 56-26 1024-2 967-2 967-490 965-487-3-487-3-492-643-5-623-6-641-26-680-76-148-324-150-421-3-28 42-28 42-33 687-3 355-7 647-8 649-1 1-205 2-452 2-451 0-451 0-448-792 4-893-1-836 83-1003 112-223 336-382 638-452 53-12 119-17 252-17 161 1 190 3 276 26 52 14 129 39 169 56 75 29 75 29 91-67 26-149 71-261 158-393 184-279 499-496 826-569 92-21 342-18 440 5 376 87 644 321 753 656 68 206 83 357 87 830 2 294 7 419 19 490 55 344 196 498 372 407 38-20 97-84 122-134 48-93 70-236 53-333-8-47-7-59 8-80 72-104 501-152 596-67 50 45 85 309 66 488-54 497-356 871-786 974-82 20-310 28-403 15z" />
+      <path d="M4915 2801c-46-21-79-54-94-93-6-15-13-96-17-180-8-173-3-190 60-246 41-36 54-38 298-52 194-10 223-6 271 39 49 45 57 72 66 227 10 159 4 196-35 243-40 47-90 59-299 71-231 12-202 13-250-9z" />
+    </g>
+  </svg>
+);
+
+export const HomeIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
     viewBox="0 0 24 24"
@@ -90,20 +108,23 @@ export const ProductsIcon = () => (
     />
   </svg>
 );
-export const SettingsIcon = () => (
+export const Settings2Icon = ({ className }: { className?: string }) => (
   <svg
-    className="w-6 h-6 strokeCurrent"
     xmlns="http://www.w3.org/2000/svg"
-    fill="none"
+    width="24"
+    height="24"
     viewBox="0 0 24 24"
+    fill="none"
     stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
   >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-    />
+    <path d="M20 7h-9" />
+    <path d="M14 17H5" />
+    <circle cx="17" cy="17" r="3" />
+    <circle cx="7" cy="7" r="3" />
   </svg>
 );
 export const MessagesIcon = () => (
@@ -239,6 +260,22 @@ export const RightChevronIcon = ({ className }: { className?: string }) => (
     className={className}
   >
     <path d="m9 18 6-6-6-6" />
+  </svg>
+);
+
+export const ChevronsUpDownIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="m7 15 5 5 5-5" />
+    <path d="m7 9 5-5 5 5" />
   </svg>
 );
 

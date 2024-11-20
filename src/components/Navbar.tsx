@@ -1,15 +1,20 @@
 import { useContext, useEffect, useState } from "react";
 import { ModelProviderContext } from "../state/modelProviderContext";
+import { ChevronsUpDownIcon } from "./Icons";
 
 type MenuOption = {
   id: number;
+  active: boolean;
   label: string;
   onClick: () => void;
 };
 
-const MenuOption = ({ label, onClick }: MenuOption) => (
+const MenuOption = ({ active, label, onClick }: MenuOption) => (
   <a
-    className="w-full px-4 py-2 text-left hover:bg-slate-300 active:bg-slate-400"
+    className={
+      "w-full pl-4 pr-8 py-2 text-left active:bg-slate-400 rounded whitespace-nowrap " +
+      (active ? "bg-slate-200 hover:bg-slate-300" : "hover:bg-slate-200")
+    }
     onClick={onClick}
   >
     {label}
@@ -28,18 +33,19 @@ const Dropdown = ({ selectedOptionIndex, menuOptions }: DropdownProps) => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         // we need setTimeout here to allow the event to fire on the submenu
-        onBlur={() => setTimeout(() => setIsOpen(false), 300)}
-        className="flex items-center h-10 px-4 rounded hover:bg-slate-300 active:bg-slate-400"
+        onBlur={() => setTimeout(() => setIsOpen(false), 120)}
+        className="flex items-center h-10 px-4 rounded hover:bg-slate-200 active:bg-slate-400"
       >
         <div>{menuOptions[selectedOptionIndex]?.label || "Select"}</div>
+        <ChevronsUpDownIcon className="w-5 h-5 ml-2" />
       </button>
       <div
-        className="absolute right-0 flex flex-col items-start min-w-40 rounded-md mt-1 p-1 border-2 border-slate-200 bg-white shadow-lg"
+        className="absolute left-0 flex flex-col items-start min-w-40 rounded-md mt-1 p-1 border-2 border-slate-200 bg-white shadow-lg"
         style={{
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? "auto" : "none",
-          transition: "all 120ms ease-in-out",
-          transform: isOpen ? "translateY(0)" : "translateY(10px)",
+          transition: "all 60ms ease-in-out",
+          transform: isOpen ? "translateY(0)" : "translateY(20px)",
         }}
       >
         {menuOptions.map((option) => (
@@ -47,8 +53,8 @@ const Dropdown = ({ selectedOptionIndex, menuOptions }: DropdownProps) => {
             key={option.label + "_" + option.id}
             {...option}
             onClick={() => {
-              setIsOpen(false);
               option.onClick();
+              setIsOpen(false);
             }}
           />
         ))}
@@ -108,6 +114,7 @@ export const Navbar = ({
 
   const providerOptions = providers.map((provider) => ({
     id: provider.id,
+    active: provider.id === selectedProviderId,
     label: provider.name,
     onClick: () => {
       selectProvider(provider.id);
@@ -118,6 +125,7 @@ export const Navbar = ({
     .find((p) => p.id === selectedProviderId)
     ?.models.map((model) => ({
       id: model.id,
+      active: model.id === selectedModelId,
       label: model.name,
       onClick: () => {
         selectModel(model.id);
@@ -149,11 +157,7 @@ export const Navbar = ({
 
   const modelSelection = [];
   if (providerOptions.length === 0) {
-    modelSelection.push(
-      <div key="no-providers">
-        No providers available (add one in the sidebar)
-      </div>
-    );
+    modelSelection.push(<div key="no-providers" className="p-4"></div>);
   } else {
     modelSelection.push(
       <Dropdown

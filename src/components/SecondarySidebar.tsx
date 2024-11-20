@@ -5,20 +5,29 @@ import { MessageContext } from "../state/messageContext";
 import type { MessageStoreContext, ChatMessage } from "../state/messageContext";
 
 const getSearchResults = async (query: string) => {
-  return (await db.select(
-    `SELECT
-      messages.*,
-      snippet(messages_fts, 0, '<b>', '</b>', '...', 10) as snippet
+  return (
+    await db.select<{ path: string; data: string; snippet: string }>(
+      `SELECT
+      messages.path as path,
+      messages.data as data,
+      snippet(messages_fts, 2, '<b>', '</b>', '...', 30) as snippet
     FROM
-      messages
+      messages_fts
     JOIN
-      messages_fts ON messages.rowid = messages_fts.rowid
+      messages ON messages.id = messages_fts.id
     WHERE
       messages_fts MATCH '${query}'
     ORDER BY
       rank
     LIMIT 50`
-  )) as (ChatMessage & { snippet: string })[];
+    )
+  ).map(({ path, data, snippet }) => {
+    return {
+      treeId: path,
+      ...JSON.parse(data),
+      snippet,
+    };
+  }) as (ChatMessage & { snippet: string })[];
 };
 
 type SearchbarProps = {
@@ -55,7 +64,7 @@ const Searchbar = ({ query, setQuery }: SearchbarProps) => (
 
 type LinkProps = {
   onOpen: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   label: string;
 };
 const Link = ({ onOpen, onDelete, label }: LinkProps) => (
@@ -69,15 +78,17 @@ const Link = ({ onOpen, onDelete, label }: LinkProps) => (
       dangerouslySetInnerHTML={{ __html: label }}
     />
     {/* delete button */}
-    <button
-      className="w-6 min-w-6 h-6 mr-2 ml-auto text-slate-500 hover:bg-red-400 items-center justify-center rounded group-hover:flex hover:text-white active:scale-95 active:bg-red-500 hidden"
-      onClick={(e) => {
-        e.stopPropagation();
-        onDelete();
-      }}
-    >
-      <XIcon className="w-4 h-4" />
-    </button>
+    {onDelete === undefined ? null : (
+      <button
+        className="w-6 min-w-6 h-6 mr-2 ml-auto text-slate-500 hover:bg-red-400 items-center justify-center rounded group-hover:flex hover:text-white active:scale-95 active:bg-red-500 hidden"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+      >
+        <XIcon className="w-4 h-4" />
+      </button>
+    )}
   </a>
 );
 
@@ -178,9 +189,16 @@ export const SecondarySidebar = () => {
             key={treeId}
             label={message}
             onOpen={() => setTopLevelMessage(treeId)}
-            onDelete={() => {
-              removeMessageAndDescendants(treeId);
-            }}
+            onDelete={
+              query
+                ? undefined
+                : () => {
+                    const sure = window.confirm(
+                      "Are you sure you want to delete this entire message thread?"
+                    );
+                    if (sure) removeMessageAndDescendants(treeId);
+                  }
+            }
           />
         ))}
       </div>

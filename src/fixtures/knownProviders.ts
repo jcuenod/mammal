@@ -51,10 +51,14 @@ export const knownProviders: KnownProvider[] = [
   {
     icon: "🌌",
     name: "Google",
-    endpoint: "https://api.google.com/v1/",
+    endpoint: "https://generativelanguage.googleapis.com/v1beta/",
     models: [
+      { name: "Gemini 1.5 Pro 002", model: "gemini-1.5-pro-002" },
       { name: "Gemini Pro 1.5", model: "gemini-pro-1.5" },
       { name: "Gemini 1.5 Flash", model: "gemini-1.5-flash" },
+      { name: "Gemini 1.5 Flash 002", model: "gemini-1.5-flash-002" },
+      { name: "Gemini 1.5 Flash 8B", model: "gemini-1.5-flash-8b" },
+      { name: "Gemini Exp 1114 (Preview)", model: "gemini-exp-1114" },
     ],
   },
 ];

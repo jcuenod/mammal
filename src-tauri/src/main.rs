@@ -4,13 +4,6 @@ use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 
-// messages table id will be like 123.123.142
-// so we will be doing selects like "SELECT * FROM messages WHERE id LIKE '123.123.%'"
-// so we need to create an index for the id column
-// CREATE INDEX id_index ON messages (id);
-// we also want an fts5 table for the message column
-// CREATE VIRTUAL TABLE messages_fts USING fts5(id, role, name, message, metadata, content='messages', content_rowid='id');
-
 fn main() {
     let migrations = vec![
         // Define your migrations here
@@ -18,48 +11,61 @@ fn main() {
             version: 1,
             description: "create_initial_tables",
             sql: "
-            CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY,
-                treeId TEXT UNIQUE NOT NULL,
-                role TEXT NOT NULL,
-                name TEXT NOT NULL,
-                createdAt TEXT NOT NULL,
-                message TEXT,
-                metadata TEXT
-            );
-            CREATE INDEX id_index ON messages (treeId);
-            CREATE VIRTUAL TABLE messages_fts USING fts5(message, content='messages', content_rowid='id');
+                CREATE TABLE messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                    path TEXT UNIQUE, 
+                    data JSON -- TODO: depth INTEGER GENERATED ALWAYS AS (LENGTH(path) - LENGTH(REPLACE(path, '.', '')) + 1) STORED
+                    );
+                CREATE INDEX idx_messages_path ON messages(path);
+                -- TODO: CREATE INDEX idx_nodes_depth ON nodes(depth);
 
-            -- Trigger for INSERT
-            CREATE TRIGGER messages_ai AFTER INSERT ON messages BEGIN
-                INSERT INTO messages_fts(rowid, message) VALUES (new.id, new.message);
-            END;
+                CREATE VIEW message_view AS (
+                    SELECT 
+                    id, 
+                    path, 
+                    json_extract(data, '$.message') AS message 
+                    FROM 
+                    messages;
+                )
 
-            -- Trigger for DELETE
-            CREATE TRIGGER messages_ad AFTER DELETE ON messages BEGIN
-                INSERT INTO messages_fts(messages_fts, rowid, message) VALUES('delete', old.id, old.message);
-            END;
+                CREATE VIRTUAL TABLE messages_fts USING fts5(
+                    id UNINDEXED, path UNINDEXED, message, 
+                    tokenize = 'trigram', content = 'message_view', 
+                    content_rowid = 'id'
+                );
 
-            -- Trigger for UPDATE
-            CREATE TRIGGER messages_au AFTER UPDATE ON messages BEGIN
-                INSERT INTO messages_fts(messages_fts, rowid, message) VALUES('delete', old.id, old.message);
-                INSERT INTO messages_fts(rowid, message) VALUES (new.id, new.message);
-            END;
+                -- Trigger for INSERT
+                CREATE TRIGGER message_insert AFTER INSERT ON messages
+                BEGIN
+                    INSERT INTO messages_fts (id, path, message) SELECT NEW.id, NEW.path, json_extract(NEW.data, '$.message');
+                END;
 
-            CREATE TABLE IF NOT EXISTS providers (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                endpoint TEXT NOT NULL,
-                apiKey TEXT NOT NULL
-            );
+                -- Trigger for DELETE
+                CREATE TRIGGER messages_delete AFTER DELETE ON messages
+                BEGIN
+                    DELETE FROM messages_fts WHERE id = OLD.id;
+                END;
 
-            CREATE TABLE IF NOT EXISTS models (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                model TEXT NOT NULL,
-                providerId INTEGER NOT NULL,
-                FOREIGN KEY (providerId) REFERENCES providers(id)
-            );
+                -- Trigger for UPDATE
+                CREATE TRIGGER messages_update AFTER UPDATE ON messages
+                BEGIN
+                    DELETE FROM messages_fts WHERE id = OLD.id;
+                    INSERT INTO messages_fts (id, path, message) SELECT NEW.id, NEW.path, json_extract(NEW.data, '$.message');
+                END;
+
+                CREATE TABLE providers (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                    name TEXT NOT NULL, endpoint TEXT NOT NULL, 
+                    apiKey TEXT NOT NULL
+                );
+
+                CREATE TABLE models (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                    name TEXT NOT NULL, 
+                    model TEXT NOT NULL, 
+                    providerId INTEGER NOT NULL, 
+                    FOREIGN KEY (providerId) REFERENCES providers(id)
+                );
             ",
             kind: MigrationKind::Up,
         },

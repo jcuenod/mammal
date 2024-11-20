@@ -1,4 +1,16 @@
 import { createContext } from "react";
+import MPTreeNode from "../treebeard/src/MPTreeNode";
+import type { MPTreeNodeWithChildren } from "../treebeard/src/MPTreeNode";
+
+export type MessageThread = {
+  treeId: string;
+  role: string;
+  name: string;
+  createdAt: string;
+  message: string;
+  metadata: string;
+  getSiblings: (includeSelf: boolean) => Promise<MPTreeNode[]>;
+};
 
 export type ChatMessageRole = "user" | "assistant" | "system";
 export type ChatMessage = {
@@ -30,11 +42,11 @@ type MessageStore = {
   topLevelMessages: ChatMessage[];
   activeMessage: string | null;
   threadOpId: string | null;
-  messageTree: ChatMessage[];
-  messageThread: ChatMessage[];
+  messageTree: MPTreeNodeWithChildren | null;
+  messageThread: MessageThread[];
   setTopLevelMessage: (treeId: string) => void;
   setActiveMessage: (treeId: string | null) => void;
-  addMessage: (message: AddMessage) => Promise<string>;
+  addMessage: (message: AddMessage) => Promise<string | null>;
   removeMessageAndDescendants: (treeId: string) => void;
 };
 export type MessageStoreLoadingState = "loading" | "error" | "ready" | "init";
@@ -55,7 +67,7 @@ export const MessageContext = createContext<MessageStoreContext>({
     topLevelMessages: [],
     activeMessage: null,
     threadOpId: null,
-    messageTree: [],
+    messageTree: null,
     messageThread: [],
     setTopLevelMessage: () => {
       console.log("Not yet initialized");

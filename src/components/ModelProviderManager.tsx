@@ -6,7 +6,7 @@ import {
   updateProvider,
   // getModels,
   addModel,
-  // removeModel,
+  removeModel,
   updateModel,
   // getAll,
 } from "../state/modelProviders";
@@ -18,6 +18,7 @@ import type {
 import { knownProviders } from "../fixtures/knownProviders";
 import { ModelProviderContext } from "../state/modelProviderContext";
 import { EditIcon, PlusIcon, XIcon } from "./Icons";
+import { BotBackground } from "./BotBackground";
 
 type addProviderHelperFunction = (
   provider: {
@@ -67,7 +68,9 @@ const AddProviderForm = ({ onClose }: AddProviderFormProps) => {
                 {provider.name}
               </option>
             ))}
-            <option value="Custom Model">Custom Model</option>
+            <option value="Custom Model">
+              Custom Model (Open AI API Compatible)
+            </option>
           </select>
         </div>
         <div className={knownProvider !== "Custom Model" ? "hidden" : "block"}>
@@ -204,15 +207,20 @@ const EditProviderForm = ({
 
 type AddModelFormProps = {
   providerId: number;
+  providerName: string;
   onClose: () => void;
 };
-const AddModelForm = ({ providerId, onClose }: AddModelFormProps) => {
+const AddModelForm = ({
+  providerId,
+  providerName,
+  onClose,
+}: AddModelFormProps) => {
   const [name, setName] = useState("");
   const [model, setModel] = useState("");
 
   return (
     <form className="space-y-6">
-      <h2 className="text-xl font-semibold">Add Model</h2>
+      <h2 className="text-xl font-semibold">Add {providerName} Model</h2>
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">Name</label>
@@ -261,9 +269,14 @@ const AddModelForm = ({ providerId, onClose }: AddModelFormProps) => {
 
 type EditModelFormProps = {
   selectedModel: StoredModel;
+  providerName: string;
   onClose: () => void;
 };
-const EditModelForm = ({ selectedModel, onClose }: EditModelFormProps) => {
+const EditModelForm = ({
+  selectedModel,
+  providerName,
+  onClose,
+}: EditModelFormProps) => {
   const [name, setName] = useState(selectedModel.name);
   const [model, setModel] = useState(selectedModel.model);
 
@@ -274,7 +287,7 @@ const EditModelForm = ({ selectedModel, onClose }: EditModelFormProps) => {
 
   return (
     <form className="space-y-6">
-      <h2 className="text-xl font-semibold">Edit Model</h2>
+      <h2 className="text-xl font-semibold">Edit {providerName} Model</h2>
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">Name</label>
@@ -309,6 +322,15 @@ const EditModelForm = ({ selectedModel, onClose }: EditModelFormProps) => {
           </button>
           <button
             type="button"
+            onClick={() => {
+              removeModel(selectedModel.id).then(onClose);
+            }}
+            className="px-4 py-2 border border-red-200 text-red-600 rounded-md hover:bg-red-100 transition-colors active:bg-red-200"
+          >
+            Delete Model
+          </button>
+          <button
+            type="button"
             onClick={onClose}
             className="px-4 py-2 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors active:bg-slate-100"
           >
@@ -320,7 +342,7 @@ const EditModelForm = ({ selectedModel, onClose }: EditModelFormProps) => {
   );
 };
 
-const NoForm = () => <div className="text-center">No form selected</div>;
+const NoForm = () => <BotBackground />;
 
 const SomethingHasGoneWrong = ({ formState }: { formState: FormState }) => (
   <div>
@@ -356,7 +378,15 @@ const ModelProviderManagerForm = ({
       <EditProviderForm selectedProvider={selectedProvider} onClose={onClose} />
     );
   } else if (formState.state === "new-model" && formState.providerId) {
-    return <AddModelForm providerId={formState.providerId} onClose={onClose} />;
+    return (
+      <AddModelForm
+        providerId={formState.providerId}
+        providerName={
+          providers.find((p) => p.id === formState.providerId)?.name || ""
+        }
+        onClose={onClose}
+      />
+    );
   } else if (formState.state === "edit-model") {
     const selectedModel = providers
       .map((p) => p.models)
@@ -365,7 +395,15 @@ const ModelProviderManagerForm = ({
     if (!selectedModel) {
       return <SomethingHasGoneWrong formState={formState} />;
     }
-    return <EditModelForm selectedModel={selectedModel} onClose={onClose} />;
+    return (
+      <EditModelForm
+        selectedModel={selectedModel}
+        providerName={
+          providers.find((p) => p.id === selectedModel.providerId)?.name || ""
+        }
+        onClose={onClose}
+      />
+    );
   } else {
     return <SomethingHasGoneWrong formState={formState} />;
   }
@@ -471,6 +509,10 @@ export const ModelProviderManager = ({ open }: ModelProviderManagerProps) => {
               provider={provider}
               setFormState={setFormState}
               deleteProvider={(providerId) => {
+                const sure = window.confirm(
+                  "Are you sure you want to delete this provider?"
+                );
+                if (sure === null) return;
                 removeProvider(providerId).then(() => {
                   refresh();
                 });
@@ -481,7 +523,7 @@ export const ModelProviderManager = ({ open }: ModelProviderManagerProps) => {
       </div>
 
       {/* Right Side - Forms */}
-      <div className="w-2/3 pl-6 py-6 overflow-auto min-h-full">
+      <div className="w-2/3 pl-6 py-6 overflow-auto min-h-full relative">
         <ModelProviderManagerForm
           providers={providers}
           formState={formState}
@@ -490,7 +532,7 @@ export const ModelProviderManager = ({ open }: ModelProviderManagerProps) => {
             // We need setTimeout here because addProvider crashes when
             // there are callbacks dependent on awaiting the async db update
             // (evidently a bug in tauri's sqlite plugin...)
-            setTimeout(refresh, 50);
+            setTimeout(refresh, 100);
           }}
         />
       </div>

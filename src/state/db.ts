@@ -4,40 +4,35 @@ import Database from "@tauri-apps/plugin-sql";
 
 const TIMEOUT = 250;
 
-let dbRef: Database | null = null;
+let db: Database | null = null;
 
-const db = Database.load("sqlite:mammal.db");
+const dbPromise = Database.load("sqlite:mammal.db");
 
 (async () => {
-  const d = await db;
-  dbRef = d;
-  await dbRef.execute(`PRAGMA journal_mode=WAL;`);
-  await dbRef.execute(`PRAGMA busy_timeout = 5000;`);
-  await dbRef.execute(`PRAGMA cache_size = -20000;`);
-  await dbRef.execute(`PRAGMA foreign_keys = ON;`);
-  await dbRef.execute(`PRAGMA auto_vacuum = INCREMENTAL;`);
-  await dbRef.execute(`PRAGMA page_size = 8192;`);
-  const result = await dbRef.select<{
-    "count(*)": number;
-  }[]>(`SELECT count(*) FROM messages`);
-  console.log(result?.[0]);
+  db = await dbPromise;
+  await db.execute(`PRAGMA journal_mode=WAL;`);
+  await db.execute(`PRAGMA busy_timeout = 5000;`);
+  await db.execute(`PRAGMA cache_size = -20000;`);
+  await db.execute(`PRAGMA foreign_keys = ON;`);
+  await db.execute(`PRAGMA auto_vacuum = INCREMENTAL;`);
+  await db.execute(`PRAGMA page_size = 8192;`);
 })();
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default {
-  select: async (query: string, bindValues: any[] = []) => {
-    if (!dbRef) {
+  select: async <T>(query: string, bindValues: any[] = []) => {
+    if (!db) {
       await wait(TIMEOUT);
-      if (!dbRef) throw new Error("Database not loaded");
+      if (!db) throw new Error("Database not loaded");
     }
-    return await dbRef.select(query, bindValues);
+    return (await db.select(query, bindValues)) as T[];
   },
   execute: async (query: string, bindValues: any[] = []) => {
-    if (!dbRef) {
+    if (!db) {
       await wait(TIMEOUT);
-      if (!dbRef) throw new Error("Database not loaded");
+      if (!db) throw new Error("Database not loaded");
     }
-    return await dbRef.execute(query, bindValues);
+    return await db.execute(query, bindValues);
   },
 };

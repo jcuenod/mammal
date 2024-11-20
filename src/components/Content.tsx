@@ -3,6 +3,7 @@ import {
   ChatMessageRole,
   MessageContext,
   MessageStoreContext,
+  MessageThread,
 } from "../state/messageContext";
 import { getResponse } from "../llm";
 import { useState, useRef, useEffect, useContext } from "react";
@@ -13,6 +14,7 @@ import "./Content.css";
 import { getAll } from "../state/modelProviders";
 import { LeftChevronIcon, RefreshIcon, RightChevronIcon } from "./Icons";
 import { UserIcon, AssistantIcon, SendIcon } from "./Icons";
+import MPTreeNode from "../treebeard/src/MPTreeNode";
 
 const getParentId = (treeId: string) =>
   treeId.split(".").slice(0, -1).join(".");
@@ -61,8 +63,8 @@ const DirectionButton = ({
 };
 
 type AssistantButtonsProps = {
-  leftSibling: string | null;
-  rightSibling: string | null;
+  leftSibling?: string;
+  rightSibling?: string;
   busy: boolean;
   onRegenerate?: () => void;
   setActiveMessage: (treeId: string) => void;
@@ -117,8 +119,7 @@ const AssistantButtons = ({
 
 type MessageProps = {
   treeId: string;
-  leftSibling: string | null; // treeId
-  rightSibling: string | null; // treeId
+  getSiblings: (s: boolean) => Promise<MPTreeNode[]>;
   name: string;
   role: ChatMessageRole;
   busy: boolean;
@@ -129,8 +130,7 @@ type MessageProps = {
 };
 const Message = ({
   treeId,
-  leftSibling,
-  rightSibling,
+  getSiblings,
   name,
   markdown,
   role,
@@ -138,69 +138,51 @@ const Message = ({
   activeMessage,
   onRegenerate,
   setActiveMessage,
-}: MessageProps) => (
-  <div
-    className={
-      "flex w-full p-6 mb-2 bg-white rounded-lg border-2 " +
-      (activeMessage === treeId ? "border-blue-400" : "border-white")
-    }
-  >
-    {/* <img className="w-10 h-10 rounded-full" src={avatar} alt={name} /> */}
-    <div className="w-10 h-10 min-w-10 rounded-full bg-blue-100 flex items-center justify-center">
-      {role === "user" ? <UserIcon /> : <AssistantIcon />}
-    </div>
-    <div className="flex flex-col ml-4 markdown-body w-full">
-      {/* space between flex items in row */}
-      <div className="flex flex-row justify-between">
-        <span className="font-bold">{name}</span>
-        <div className="flex flex-row justify-center items-center">
-          {role === "assistant" && (
-            <AssistantButtons
-              leftSibling={leftSibling}
-              rightSibling={rightSibling}
-              busy={busy}
-              onRegenerate={onRegenerate}
-              setActiveMessage={setActiveMessage}
-            />
-          )}
-        </div>
-      </div>{" "}
-      <Markdown remarkPlugins={[remarkGfm]}>{markdown}</Markdown>
-    </div>
-  </div>
-);
+}: MessageProps) => {
+  const [siblings, setSiblings] = useState<MPTreeNode[]>([]);
+  useEffect(() => {
+    getSiblings(true).then(setSiblings);
+  }, [treeId]);
 
-const getSiblings = (treeId: string, messages: ChatMessage[]) => {
-  const parentId = getParentId(treeId);
-  const parentDepth = parentId.split(".").length;
-  const descendantsOfParent = messages
-    .filter((m) => m.treeId.startsWith(parentId + "."))
-    .map((m) => m.treeId);
-  const childrenOfParent = Array.from(
-    new Set(
-      descendantsOfParent.map((m) =>
-        m
-          .split(".")
-          .slice(0, parentDepth + 1)
-          .join(".")
-      )
-    )
-  ).sort((a, b) => {
-    const nodeA = a.split(".").pop();
-    const nodeB = b.split(".").pop();
-    if (nodeA && nodeB) {
-      return parseInt(nodeA) - parseInt(nodeB);
-    }
-    return 0;
-  });
+  const currentIndex = siblings.findIndex((s) => s.path === treeId);
+  const leftSiblings = siblings.slice(0, currentIndex).reverse();
+  const rightSiblings = siblings.slice(currentIndex + 1);
+  const leftSibling =
+    leftSiblings.length > 0 ? leftSiblings[0].path : undefined;
+  const rightSibling =
+    rightSiblings.length > 0 ? rightSiblings[0].path : undefined;
 
-  const currentIndex = childrenOfParent.indexOf(treeId);
-  const leftSiblings = childrenOfParent.slice(0, currentIndex).reverse();
-  const rightSiblings = childrenOfParent.slice(currentIndex + 1);
-  return {
-    leftSibling: leftSiblings.length > 0 ? leftSiblings[0] : null,
-    rightSibling: rightSiblings.length > 0 ? rightSiblings[0] : null,
-  };
+  return (
+    <div
+      className={
+        "flex w-full p-6 mb-2 bg-white rounded-lg"
+        // + (activeMessage === treeId ? " border-2 border-slate-400" : " border-2 border-white")
+      }
+    >
+      {/* <img className="w-10 h-10 rounded-full" src={avatar} alt={name} /> */}
+      <div className="w-10 h-10 min-w-10 rounded-full bg-blue-100 flex items-center justify-center">
+        {role === "user" ? <UserIcon /> : <AssistantIcon />}
+      </div>
+      <div className="flex flex-col ml-4 markdown-body w-full">
+        {/* space between flex items in row */}
+        <div className="flex flex-row justify-between">
+          <span className="font-bold">{name}</span>
+          <div className="flex flex-row justify-center items-center">
+            {role === "assistant" && (
+              <AssistantButtons
+                leftSibling={leftSibling}
+                rightSibling={rightSibling}
+                busy={busy}
+                onRegenerate={onRegenerate}
+                setActiveMessage={setActiveMessage}
+              />
+            )}
+          </div>
+        </div>{" "}
+        <Markdown remarkPlugins={[remarkGfm]}>{markdown}</Markdown>
+      </div>
+    </div>
+  );
 };
 
 export const Content = () => {
@@ -210,7 +192,6 @@ export const Content = () => {
     messageThread: thread,
     addMessage,
     threadOpId,
-    messageTree,
     activeMessage,
     setActiveMessage,
   } = data;
@@ -220,7 +201,7 @@ export const Content = () => {
   const [busy, setBusy] = useState(false);
   const [selectedProviderId, selectProvider] = useState<number>(0);
   const [selectedModelId, selectModel] = useState<number>(0);
-  const [lastMessage, setLastMessage] = useState<ChatMessage | null>();
+  const [lastMessage, setLastMessage] = useState<MessageThread | null>(null);
   const islastMessageInThread = thread.find(
     (m) => m.message === lastMessage?.message
   );
@@ -276,11 +257,12 @@ export const Content = () => {
           name: author,
           createdAt: new Date().toISOString(),
           message: responseSnapshot,
-          metadata: {
+          metadata: JSON.stringify({
             provider: provider.name,
             model: model.model,
             temperature: 0.5,
-          },
+          }),
+          getSiblings: () => Promise.resolve([]),
         });
       },
       async (content) => {
@@ -290,11 +272,12 @@ export const Content = () => {
           name: author,
           createdAt: new Date().toISOString(),
           message: content,
-          metadata: {
+          metadata: JSON.stringify({
             provider: provider.name,
             model: model.model,
             temperature: 0.5,
-          },
+          }),
+          getSiblings: () => Promise.resolve([]),
         });
         // const _evenNewerId =
         await addMessage({
@@ -315,7 +298,7 @@ export const Content = () => {
           setLastMessage(null);
           setBusy(false);
           callback?.(content);
-        }, 300);
+        }, 100);
       }
     );
   };
@@ -334,6 +317,10 @@ export const Content = () => {
       },
       parentId: messages[messages.length - 1]?.treeId,
     });
+    if (!newId) {
+      console.error("Failed to add message");
+      return;
+    }
 
     const messageMap = [
       ...messages.map(({ role, message }) => ({
@@ -404,20 +391,20 @@ export const Content = () => {
         {/* spacer for when there are too few messages to fill the screen */}
         <div className="flex-grow" />
         {/* messages */}
-        {[...messages].reverse().map(({ treeId, name, role, message }) => (
+        {[...messages].reverse().map((m) => (
           <Message
-            key={treeId}
-            treeId={treeId}
+            key={m.treeId}
+            treeId={m.treeId}
             busy={busy}
-            {...getSiblings(treeId, messageTree)}
-            name={name}
-            role={role}
-            markdown={message}
+            getSiblings={m.getSiblings}
+            name={m.name}
+            role={m.role as ChatMessageRole}
+            markdown={m.message}
             activeMessage={activeMessage}
             setActiveMessage={(treeId) => setActiveMessage(treeId)}
             onRegenerate={() => {
-              if (role === "assistant") {
-                onRegenerate(getParentId(treeId));
+              if (m.role === "assistant") {
+                onRegenerate(getParentId(m.treeId));
               } else {
                 console.error(
                   "onRegenerate not defined for user/system messages"

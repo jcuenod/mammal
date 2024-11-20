@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SecondarySidebar } from "./components/SecondarySidebar";
 import { Sidebar } from "./components/Sidebar";
 import { Content } from "./components/Content";
@@ -11,13 +11,30 @@ import "./App.css";
 
 function App() {
   const [modalState, setModalState] = useState<mainViewState>(defaultState);
+  const [hasProviders, setHasProviders] = useState(true);
+
+  const setModalStateAndCheckProviders = (state: mainViewState) => {
+    if (hasProviders) {
+      setModalState(state);
+      return;
+    }
+    alert("Please add a provider first.");
+  };
+
+  useEffect(() => {
+    if (hasProviders) return;
+    setModalState("add-provider");
+  }, [hasProviders]);
 
   return (
     <MessageProviderContextWrapper>
-      <ModelProviderContextWrapper>
+      <ModelProviderContextWrapper setHasProviders={setHasProviders}>
         <div className="flex w-screen h-screen text-slate-700">
           <div className="flex flex-col items-center w-16 min-w-16 pb-4 overflow-auto border-r border-slate-300">
-            <Sidebar state={modalState} setSidebarState={setModalState} />
+            <Sidebar
+              state={modalState}
+              setSidebarState={setModalStateAndCheckProviders}
+            />
           </div>
           <div className="flex flex-row w-full relative overflow-hidden">
             <div className="flex flex-col w-80 min-w-80 border-r border-slate-300">

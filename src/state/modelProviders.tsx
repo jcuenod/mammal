@@ -87,8 +87,10 @@ export const getAll = async () => {
   }));
 };
 const ModelProviderContextWrapper = ({
+  setHasProviders,
   children,
 }: {
+  setHasProviders: (has: boolean) => void;
   children: React.ReactNode;
 }) => {
   const [modelProviders, setModelProviders] = useState<ProviderWithModels[]>(
@@ -98,6 +100,7 @@ const ModelProviderContextWrapper = ({
   const modelProviderContext = {
     refresh: async () => {
       const providers = await getAll();
+      setHasProviders(providers.length > 0);
       setModelProviders(providers);
     },
     providers: modelProviders,
