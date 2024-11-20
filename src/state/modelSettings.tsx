@@ -7,7 +7,7 @@ const ModelSettingsContextWrapper = ({
   children: React.ReactNode;
 }) => {
   const [temperature, setTemperature] = useState(0.3);
-  const [maxTokens, setMaxTokens] = useState(1012);
+  const [maxTokens, setMaxTokens] = useState(1024);
 
   const modelSettingsContext = {
     temperature,

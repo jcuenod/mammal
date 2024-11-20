@@ -1,10 +1,8 @@
-// maxTokens is a linear scale but we want to convert it to a log scale
-const maxTokensToLogScale = (maxTokens: number) => {
-  return Math.round(Math.exp(maxTokens / 25));
+const scaleUp = (maxTokens: number) => {
+  return Math.round(Math.pow(2, maxTokens / 18));
 };
-// inverse of maxTokensToLogScale
-const logScaleToMaxTokens = (logTokens: number) => {
-  return Math.round(25 * Math.log(logTokens));
+const scaleDown = (logTokens: number) => {
+  return Math.round(18 * Math.log2(logTokens));
 };
 
 type ModelSettingsProps = {
@@ -45,11 +43,9 @@ export const ModelSettingsMenu = ({
       className="w-full"
       type="range"
       min="1"
-      max="300"
-      value={logScaleToMaxTokens(maxTokens)}
-      onChange={(e) =>
-        setMaxTokens(maxTokensToLogScale(parseInt(e.target.value)))
-      }
+      max="306"
+      value={scaleDown(maxTokens)}
+      onChange={(e) => setMaxTokens(scaleUp(parseInt(e.target.value)))}
     />
   </div>
 );
