@@ -15,6 +15,7 @@ import { getAll } from "../state/modelProviders";
 import { LeftChevronIcon, RefreshIcon, RightChevronIcon } from "./Icons";
 import { UserIcon, AssistantIcon, SendIcon } from "./Icons";
 import MPTreeNode from "../treebeard/src/MPTreeNode";
+import { ModelSettingsContext } from "../state/modelSettingsContext";
 
 const getParentId = (treeId: string) =>
   treeId.split(".").slice(0, -1).join(".");
@@ -188,6 +189,8 @@ const Message = ({
 export const Content = () => {
   // const { data, state, error } = useContext<MessageStoreContext>(M3Context);
   const { data } = useContext<MessageStoreContext>(MessageContext);
+  const { temperature, maxTokens } = useContext(ModelSettingsContext);
+
   const {
     messageThread: thread,
     addMessage,
@@ -249,6 +252,8 @@ export const Content = () => {
       provider.apiKey,
       provider.endpoint,
       model.model,
+      temperature,
+      maxTokens,
       messages,
       (responseSnapshot) => {
         setLastMessage({
@@ -260,7 +265,7 @@ export const Content = () => {
           metadata: JSON.stringify({
             provider: provider.name,
             model: model.model,
-            temperature: 0.5,
+            temperature,
           }),
           getSiblings: () => Promise.resolve([]),
         });
@@ -275,7 +280,7 @@ export const Content = () => {
           metadata: JSON.stringify({
             provider: provider.name,
             model: model.model,
-            temperature: 0.5,
+            temperature,
           }),
           getSiblings: () => Promise.resolve([]),
         });
@@ -288,7 +293,7 @@ export const Content = () => {
             metadata: {
               provider: provider.name,
               model: model.model,
-              temperature: 0.5,
+              temperature,
             },
           },
           parentId,

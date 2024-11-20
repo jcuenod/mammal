@@ -1,14 +1,18 @@
+import type { GetResponseProps } from "./response";
+
 const removeFinalSlash = (baseUrl: string) =>
   baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
 
-export const getResponse = async (
-  apiKey: string,
-  baseURL: string,
-  model: string,
-  messages: { role: string; content: string }[],
-  onChunk: (responseSnapshot: string) => void,
-  onDone: (finalResponse: string) => void
-) => {
+export const getResponse = async ({
+  apiKey,
+  baseURL,
+  model,
+  temperature,
+  maxTokens,
+  messages,
+  onChunk,
+  onDone,
+}: GetResponseProps) => {
   // @ts-ignore
   const stream = await window.originalFetch(
     `${removeFinalSlash(baseURL)}/chat/completions`,
@@ -21,6 +25,8 @@ export const getResponse = async (
       body: JSON.stringify({
         model,
         messages,
+        max_tokens: maxTokens,
+        temperature,
         stream: true,
       }),
     }

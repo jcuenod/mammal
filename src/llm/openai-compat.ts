@@ -1,13 +1,16 @@
 import OpenAI from "openai";
+import type { GetResponseProps } from "./response";
 
-export const getResponse = async (
-  apiKey: string,
-  baseURL: string,
-  model: string,
-  messages: { role: string; content: string }[],
-  onChunk: (responseSnapshot: string) => void,
-  onDone: (finalResponse: string) => void
-) => {
+export const getResponse = async ({
+  apiKey,
+  baseURL,
+  model,
+  temperature,
+  maxTokens,
+  messages,
+  onChunk,
+  onDone,
+}: GetResponseProps) => {
   const client = new OpenAI({
     apiKey: apiKey,
     baseURL: baseURL,
@@ -22,6 +25,8 @@ export const getResponse = async (
       messages,
       model,
       stream: true,
+      max_tokens: maxTokens,
+      temperature,
     });
 
     let message = "";

@@ -1,14 +1,18 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Message } from "@anthropic-ai/sdk/src/resources/messages.js";
 
-export const getResponse = async (
-  apiKey: string,
-  _baseURL: string,
-  model: string,
-  messages: { role: string; content: string }[],
-  onChunk: (responseSnapshot: string) => void,
-  onDone: (finalResponse: string) => void
-) => {
+import type { GetResponseProps } from "./response";
+
+export const getResponse = async ({
+  apiKey,
+  baseURL: _baseURL,
+  model,
+  temperature,
+  maxTokens,
+  messages,
+  onChunk,
+  onDone,
+}: GetResponseProps) => {
   // We don't use baseurl because it's anthropic...
   const client = new Anthropic({
     apiKey: apiKey,
@@ -19,7 +23,8 @@ export const getResponse = async (
   const stream = await client.messages.stream({
     // @ts-ignore
     messages,
-    max_tokens: 1024,
+    max_tokens: maxTokens,
+    temperature: temperature,
     model,
     stream: true,
   });

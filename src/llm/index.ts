@@ -22,13 +22,24 @@ export const getResponse = (
   apiKey: string,
   baseURL: string,
   model: string,
+  temperature: number,
+  maxTokens: number,
   messages: { role: string; content: string }[],
   onChunk: (responseSnapshot: string) => void,
   onDone: (finalResponse: string) => void
 ) => {
   for (const p of patternMatching) {
     if (p.match(baseURL)) {
-      return p.function(apiKey, baseURL, model, messages, onChunk, onDone);
+      return p.function({
+        apiKey,
+        baseURL,
+        model,
+        temperature,
+        maxTokens,
+        messages,
+        onChunk,
+        onDone,
+      });
     }
   }
   console.error(`Could not find model based on url: ${baseURL}`);
