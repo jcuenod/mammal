@@ -23,6 +23,23 @@ const getSchema = (tableName: string) => {
   );
   CREATE INDEX IF NOT EXISTS idx_${tableName}_path ON ${tableName}(path);
   -- TODO: CREATE INDEX idx_nodes_depth ON nodes(depth);
+  
+  CREATE VIEW IF NOT EXISTS top_level_messages AS
+    SELECT
+      data,
+      path,
+      thread_id,
+      depth
+    FROM (
+      SELECT
+        data,
+        path,
+        CAST(SUBSTR(path, 1, INSTR(path, '.') - 1) AS INT) AS thread_id,
+        CAST(SUBSTR(path, INSTR(path, '.') + 1) AS INT) AS depth,
+        LENGTH(path) - LENGTH(REPLACE(path, '.', '')) AS dot_count
+      FROM ${tableName}
+    )
+    WHERE dot_count = 1  -- Filter for top-level messages (e.g., '8.1', '12.3')
   `;
 };
 
@@ -215,7 +232,21 @@ export default class MPTree {
   }
 
   async getRootNodes() {
-    const query = `SELECT path, data FROM ${this.tableName} WHERE path NOT LIKE '%.%'`;
+    const query = `
+      SELECT
+          t.data,
+          t.thread_id,
+          t.path
+      FROM top_level_messages t
+      INNER JOIN (
+          SELECT
+              thread_id,
+              MAX(depth) AS max_depth
+          FROM top_level_messages
+          GROUP BY thread_id
+      ) AS max_paths ON t.thread_id = max_paths.thread_id AND t.depth = max_paths.max_depth
+      ORDER BY t.thread_id;
+    `;
 
     const results = await this.dbSelect<NodeRow>(query);
     return results.map(
