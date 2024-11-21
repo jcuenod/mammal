@@ -38,6 +38,7 @@ export const Chatbox = ({
         className="flex-grow pl-6 pr-12 py-4 border-0 bg-white rounded-lg focus:ring-2 focus:ring-blue-600"
         style={{
           height,
+          outline: "none",
         }}
         onInput={(e) => {
           const $target = e.target as HTMLTextAreaElement;
