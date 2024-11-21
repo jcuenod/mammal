@@ -207,13 +207,7 @@ const MessageProviderContextWrapper = ({
       },
       setActiveMessage,
       addMessage: async ({ data, parentId }: AddMessage) => {
-        let newNode;
-        if (parentId) {
-          const parentNode = await messageMPTree.getNode(parentId);
-          newNode = await parentNode?.addChild(data);
-        } else {
-          newNode = await messageMPTree.addRoot(data);
-        }
+        const newNode = await messageMPTree.addNode(parentId || null, data);
         if (!newNode) {
           console.error("Failed to add message");
           return null;
