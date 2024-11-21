@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SendIcon } from "./Icons";
 
 const DEFAULT_HEIGHT = "3.5em";
+
+const debounce = (fn: () => void, ms: number) => {
+  let timeout: NodeJS.Timeout;
+  return () => {
+    clearTimeout(timeout);
+    timeout = setTimeout(fn, ms);
+  };
+};
 
 type ChatboxProps = {
   busy: boolean;
@@ -21,6 +29,19 @@ export const Chatbox = ({
 }: ChatboxProps) => {
   const [focus, setFocus] = useState(false);
   const [height, setHeight] = useState(DEFAULT_HEIGHT);
+
+  const fixHeight = debounce(() => {
+    const $target = chatboxRef.current;
+    if (!$target || $target?.value === "") {
+      setHeight(DEFAULT_HEIGHT);
+      return;
+    }
+    const windowHeight = window.innerHeight;
+    const idealHeight = Math.min($target.scrollHeight, windowHeight / 2);
+    setHeight(idealHeight + "px");
+  }, 100);
+
+  useEffect(fixHeight, [textInputValue]);
 
   return (
     <div
@@ -43,16 +64,7 @@ export const Chatbox = ({
           height,
           outline: "none",
         }}
-        onInput={(e) => {
-          const $target = e.target as HTMLTextAreaElement;
-          if ($target.value === "") {
-            setHeight(DEFAULT_HEIGHT);
-            return;
-          }
-          const windowHeight = window.innerHeight;
-          const idealHeight = Math.min($target.scrollHeight, windowHeight / 2);
-          setHeight(idealHeight + "px");
-        }}
+        onInput={fixHeight}
         placeholder="Type a message..."
         value={textInputValue}
         onChange={(e) => setTextInputValue(e.target.value)}
