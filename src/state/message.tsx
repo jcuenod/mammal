@@ -35,17 +35,17 @@ const getRootPath = (treeId: string) => {
   return treeId.split(".")[0];
 };
 
+const pathIsAncestorOf = (ancestorPath: string, descendantPath: string) => {
+  return (
+    descendantPath.startsWith(ancestorPath) &&
+    descendantPath.split(".").length > ancestorPath.split(".").length
+  );
+};
+
 const mapTreeToThread = (
   tree: MPTreeNodeWithChildren,
   activeMessageId: string
 ): MessageThread[] => {
-  const pathIsAncestorOf = (path1: string, path2: string) => {
-    return (
-      path2.startsWith(path1) &&
-      path2.split(".").length > path1.split(".").length
-    );
-  };
-
   const gatherAncestorsAndSelf: (
     accumulator: MPTreeNodeWithChildren[],
     mp: MPTreeNodeWithChildren,
@@ -237,6 +237,19 @@ const MessageProviderContextWrapper = ({
     topLevelState: topLevelContextState,
     topLevelError: {
       message: topLevelErrorMessage,
+    },
+    getThreadEndingAt: async (treeId: string) => {
+      const rootPath = getRootPath(treeId);
+      const tree = await messageMPTree.getTree(rootPath);
+      if (!tree) {
+        return [];
+      }
+
+      const unprunedThread = mapTreeToThread(tree, treeId);
+      const threadEndingAtId = unprunedThread.filter(
+        (m) => pathIsAncestorOf(m.treeId, treeId) || m.treeId === treeId
+      );
+      return threadEndingAtId;
     },
   };
 

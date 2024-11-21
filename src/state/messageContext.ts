@@ -2,9 +2,11 @@ import { createContext } from "react";
 import MPTreeNode from "../treebeard/src/MPTreeNode";
 import type { MPTreeNodeWithChildren } from "../treebeard/src/MPTreeNode";
 
+export type ChatMessageRole = "user" | "assistant" | "system";
+
 export type MessageThread = {
   treeId: string;
-  role: string;
+  role: ChatMessageRole;
   name: string;
   createdAt: string;
   message: string;
@@ -12,7 +14,6 @@ export type MessageThread = {
   getSiblings: (includeSelf: boolean) => Promise<MPTreeNode[]>;
 };
 
-export type ChatMessageRole = "user" | "assistant" | "system";
 export type ChatMessage = {
   treeId: string; // like 123.512.52 (so the first message will be 1, the first reply 1.1; if you regenerate the first reply it will be 1.2)
   role: ChatMessageRole;
@@ -60,6 +61,7 @@ export interface MessageStoreContext {
   topLevelError: {
     message: string;
   };
+  getThreadEndingAt: (treeId: string) => Promise<MessageThread[]>;
 }
 
 export const MessageContext = createContext<MessageStoreContext>({
@@ -90,5 +92,9 @@ export const MessageContext = createContext<MessageStoreContext>({
   topLevelState: "init",
   topLevelError: {
     message: "",
+  },
+  getThreadEndingAt: async (_) => {
+    console.log("Not yet initialized");
+    return [];
   },
 });

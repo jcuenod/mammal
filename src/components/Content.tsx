@@ -22,6 +22,9 @@ export const Content = () => {
   const { data } = useContext<MessageStoreContext>(MessageContext);
   const { temperature, maxTokens } = useContext(ModelSettingsContext);
 
+  const { getThreadEndingAt: getThreadToId } =
+    useContext<MessageStoreContext>(MessageContext);
+
   const {
     messageThread: thread,
     addMessage,
@@ -80,6 +83,7 @@ export const Content = () => {
     callback?: (content: string) => void
   ) => {
     const author = `${provider.name} (${model.name})`;
+    setBusy(true);
 
     getResponse(
       provider.apiKey,
@@ -141,77 +145,83 @@ export const Content = () => {
     );
   };
 
-  const onSubmit = async () => {
-    setBusy(true);
+  const generateChildFor = async (treeId: string) => {
+    // get message list (as { content, role }) from treebeard using newId
+    const newThread = await getThreadToId(treeId);
+    const messageMap = newThread.map(({ role, message }) => ({
+      content: message,
+      role,
+    }));
 
-    const userPrompt = textInputValue;
-    setTextInputValue("");
+    const providerAndModel = await getProviderAndModel(
+      selectedProviderId,
+      selectedModelId
+    );
+    if (!providerAndModel) {
+      return;
+    }
 
+    const { provider, model } = providerAndModel;
+    generateMessageAndAttachToParent(provider, model, messageMap, treeId);
+  };
+
+  const addMessageToParent = async ({
+    name,
+    role,
+    message,
+    parentId,
+  }: {
+    name: string;
+    role: ChatMessageRole;
+    message: string;
+    parentId: string | undefined;
+  }) => {
     const newId = await addMessage({
       data: {
-        name: "User",
-        role: "user",
-        message: userPrompt,
+        name,
+        role,
+        message,
       },
-      parentId: messages[messages.length - 1]?.treeId,
+      parentId,
     });
     if (!newId) {
       console.error("Failed to add message");
       return;
     }
 
-    const messageMap = [
-      ...messages.map(({ role, message }) => ({
-        content: message,
-        role,
-      })),
-      {
-        content: userPrompt,
-        role: "user",
-      },
-    ];
-
-    const providerAndModel = await getProviderAndModel(
-      selectedProviderId,
-      selectedModelId
-    );
-    if (!providerAndModel) {
-      return;
+    // if role is "user", we want to generate a new assistant message
+    if (role === "user") {
+      generateChildFor(newId);
     }
-    const { provider, model } = providerAndModel;
-
-    generateMessageAndAttachToParent(provider, model, messageMap, newId);
   };
 
-  const onRegenerate = async (
-    parentId: string,
-    callback?: (content: string) => void
-  ) => {
-    setBusy(true);
+  const onUserAppend = async () => {
+    const message = textInputValue;
+    setTextInputValue("");
 
-    const providerAndModel = await getProviderAndModel(
-      selectedProviderId,
-      selectedModelId
-    );
-    if (!providerAndModel) {
+    addMessageToParent({
+      name: "User",
+      role: "user",
+      message,
+      parentId: messages[messages.length - 1]?.treeId,
+    });
+  };
+
+  const onEditMessage = (treeId: string, message: string) => {
+    const parentId = getParentId(treeId);
+    const messageToBeEdited = messages.find((m) => m.treeId === treeId);
+
+    if (!messageToBeEdited) {
+      console.error("Message not found");
       return;
     }
-    const { provider, model } = providerAndModel;
 
-    const mappedMessages = messages
-      .slice(0, messages.findIndex((m) => m.treeId === parentId) + 1)
-      .map(({ role, message }) => ({
-        content: message,
-        role,
-      }));
-
-    generateMessageAndAttachToParent(
-      provider,
-      model,
-      mappedMessages,
+    addMessageToParent({
+      name: messageToBeEdited.name,
+      role: messageToBeEdited.role,
+      message,
       parentId,
-      callback
-    );
+    });
   };
 
   return (
@@ -228,7 +238,7 @@ export const Content = () => {
           busy={busy}
           textInputValue={textInputValue}
           setTextInputValue={setTextInputValue}
-          onSubmit={onSubmit}
+          onSubmit={onUserAppend}
           chatboxRef={chatboxRef}
           show={!isEditing}
         />
@@ -252,7 +262,7 @@ export const Content = () => {
               }}
               onRegenerate={() => {
                 if (m.role === "assistant") {
-                  onRegenerate(getParentId(m.treeId));
+                  generateChildFor(getParentId(m.treeId));
                 } else {
                   console.error(
                     "onRegenerate not defined for user/system messages"
@@ -269,13 +279,10 @@ export const Content = () => {
         show={isEditing !== null}
         message={messages.find((m) => m.treeId === isEditing)?.message || ""}
         onEditMessage={(message) => {
-          // setBusy(true);
-          // const parentId = getParentId(isEditing);
-          // onRegenerate(parentId, (content) => {
-          //   setBusy(false);
-          //   setIsEditing(null);
-          // });
-          console.log("Edit message", message);
+          if (isEditing === null) {
+            return;
+          }
+          onEditMessage(isEditing, message);
           setIsEditing(null);
         }}
         onCancel={() => setIsEditing(null)}
