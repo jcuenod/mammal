@@ -127,6 +127,7 @@ export const Content = () => {
             name: author,
             role: "assistant",
             message: content,
+            createdAt: new Date().toISOString(),
             metadata: {
               provider: provider.name,
               model: model.model,
@@ -181,6 +182,7 @@ export const Content = () => {
         name,
         role,
         message,
+        createdAt: new Date().toISOString(),
       },
       parentId,
     });

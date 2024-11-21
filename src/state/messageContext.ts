@@ -31,10 +31,11 @@ export type AddMessage = {
     name: string;
     role: ChatMessageRole;
     message: string;
+    createdAt: string;
     metadata?: {
-      provider?: string;
-      model?: string;
-      temperature?: number;
+      provider: string;
+      model: string;
+      temperature: number;
     };
   };
   parentId?: string;
