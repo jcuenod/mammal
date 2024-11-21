@@ -9,6 +9,7 @@ type ChatboxProps = {
   setTextInputValue: (value: string) => void;
   onSubmit: () => void;
   chatboxRef: React.RefObject<HTMLTextAreaElement>;
+  show: boolean;
 };
 export const Chatbox = ({
   busy,
@@ -16,22 +17,24 @@ export const Chatbox = ({
   setTextInputValue,
   onSubmit,
   chatboxRef,
+  show,
 }: ChatboxProps) => {
   const [focus, setFocus] = useState(false);
   const [height, setHeight] = useState(DEFAULT_HEIGHT);
-  console.log("Chatbox rendered", height);
+
   return (
     <div
       className={
-        "flex items-center bg-slate-100 m-5 z-10 " +
-        (focus ? "shadow-lg" : "shadow-2xl")
+        "flex items-center bg-slate-100 m-5 z-10" +
+        (focus ? " shadow-lg" : " shadow-2xl")
       }
       style={{
-        transition: "box-shadow 100ms",
+        transition: "box-shadow 100ms, transform 150ms",
         position: "absolute",
         bottom: 0,
         right: 0,
         left: 0,
+        transform: show ? "translateY(0)" : "translateY(150%)",
       }}
     >
       <textarea
