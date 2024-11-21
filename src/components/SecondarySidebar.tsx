@@ -75,6 +75,7 @@ const Link = ({ onOpen, onDelete, label }: LinkProps) => (
   >
     <span
       className="p-4 leading-none truncate"
+      // TODO: Sanitize label (but allow snippets to bold stuff?!?)...
       dangerouslySetInnerHTML={{ __html: label }}
     />
     {/* delete button */}
@@ -174,7 +175,16 @@ export const SecondarySidebar = () => {
   //   }
   // }, [messageTree]);
 
-  const messageListToUse = query ? searchResults : threadOps;
+  // TODO: Sanitize label (but allow snippets to bold stuff?!?)...
+  const messageListToUse = query
+    ? searchResults.map((m) => ({
+        treeId: m.treeId,
+        label: m.message,
+      }))
+    : threadOps.map((m) => ({
+        treeId: m.treeId,
+        label: m.message.slice(0, 50),
+      }));
 
   return (
     <div className="flex flex-col flex-grow p-4 h-full max-h-full">
@@ -184,10 +194,10 @@ export const SecondarySidebar = () => {
       <div className="flex-grow overflow-auto relative">
         <ErrorIndicator show={state === "error"} message={error.message} />
         <LoadingIndicator show={state === "loading"} />
-        {messageListToUse.map(({ message, treeId }: ChatMessage) => (
+        {messageListToUse.map(({ label, treeId }) => (
           <Link
             key={treeId}
-            label={message}
+            label={label}
             onOpen={() => setTopLevelMessage(treeId)}
             onDelete={
               query
