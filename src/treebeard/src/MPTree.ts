@@ -69,7 +69,6 @@ export default class MPTree {
     const jsonData = JSON.stringify(nodeData);
 
     const insertQuery = `INSERT INTO ${this.tableName} (path, data) VALUES (?, ?)`;
-    console.log("Inserting", insertQuery, newPath, jsonData);
     await this.dbExecute(insertQuery, [newPath, jsonData]);
 
     return new MPTreeNode(
