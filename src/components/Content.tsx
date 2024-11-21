@@ -12,6 +12,7 @@ import { getAll } from "../state/modelProviders";
 import { ModelSettingsContext } from "../state/modelSettingsContext";
 import { Chatbox } from "./ChatBox";
 import { Message } from "./Message";
+import { EditMessageDialog } from "./EditMessageDialog";
 
 const getParentId = (treeId: string) =>
   treeId.split(".").slice(0, -1).join(".");
@@ -32,6 +33,7 @@ export const Content = () => {
   const chatboxRef = useRef<HTMLTextAreaElement>(null);
   const [textInputValue, setTextInputValue] = useState("");
   const [busy, setBusy] = useState(false);
+  const [isEditing, setIsEditing] = useState<string | null>(null);
   const [selectedProviderId, selectProvider] = useState<number>(0);
   const [selectedModelId, selectModel] = useState<number>(0);
   const [lastMessage, setLastMessage] = useState<MessageThread | null>(null);
@@ -46,6 +48,7 @@ export const Content = () => {
 
   useEffect(() => {
     chatboxRef.current?.focus();
+    setIsEditing(null);
   }, [threadOpId]);
 
   const getProviderAndModel = async (
@@ -227,6 +230,7 @@ export const Content = () => {
           setTextInputValue={setTextInputValue}
           onSubmit={onSubmit}
           chatboxRef={chatboxRef}
+          show={!isEditing}
         />
 
         {/* message thread (col-reverse) intuitively keeps scrollbar at the bottom */}
@@ -244,7 +248,7 @@ export const Content = () => {
               activeMessage={activeMessage}
               setActiveMessage={(treeId) => setActiveMessage(treeId)}
               onEdit={() => {
-                console.error("onEdit not defined");
+                setIsEditing(m.treeId);
               }}
               onRegenerate={() => {
                 if (m.role === "assistant") {
@@ -261,6 +265,21 @@ export const Content = () => {
           <div className="flex-grow" />
         </div>
       </div>
+      <EditMessageDialog
+        show={isEditing !== null}
+        message={messages.find((m) => m.treeId === isEditing)?.message || ""}
+        onEditMessage={(message) => {
+          // setBusy(true);
+          // const parentId = getParentId(isEditing);
+          // onRegenerate(parentId, (content) => {
+          //   setBusy(false);
+          //   setIsEditing(null);
+          // });
+          console.log("Edit message", message);
+          setIsEditing(null);
+        }}
+        onCancel={() => setIsEditing(null)}
+      />
     </div>
   );
 };

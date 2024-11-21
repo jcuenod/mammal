@@ -27,7 +27,7 @@ const GhostButton = ({
 }: GhostButtonProps) => (
   <button
     type="button"
-    className="flex justify-center items-center p-1 w-6 h-6 text-slate-600 cursor-pointer disabled:hover:bg-transparent hover:bg-slate-200 hover:text-slate-700 disabled:text-slate-300 rounded active:scale-95 "
+    className="flex justify-center items-center p-1 w-6 h-6 text-slate-600 cursor-pointer disabled:hover:bg-transparent hover:bg-slate-200 hover:text-slate-700 disabled:text-slate-300 rounded active:scale-95 active:bg-slate-300 "
     style={{ pointerEvents: disabled ? "none" : "auto", ...style }}
     onClick={onClick}
     disabled={disabled}
@@ -91,10 +91,10 @@ const UserButtons = ({
         />
       </>
     ) : null}
-    {/* regenerate button */}
-    {/* <GhostButton onClick={onEdit}>
-        <EditIcon className="w-8 h-8" />
-      </GhostButton> */}
+    {/* edit button */}
+    <GhostButton onClick={onEdit}>
+      <EditIcon className="w-8 h-8" />
+    </GhostButton>
   </>
 );
 
@@ -102,6 +102,7 @@ type AssistantButtonsProps = {
   leftSibling?: string;
   rightSibling?: string;
   busy: boolean;
+  onEdit: () => void;
   onRegenerate?: () => void;
   setActiveMessage: (treeId: string) => void;
 };
@@ -109,6 +110,7 @@ const AssistantButtons = ({
   leftSibling,
   rightSibling,
   busy,
+  onEdit,
   onRegenerate,
   setActiveMessage,
 }: AssistantButtonsProps) => (
@@ -135,6 +137,10 @@ const AssistantButtons = ({
         />
       </>
     ) : null}
+    {/* edit button */}
+    <GhostButton onClick={onEdit}>
+      <EditIcon className="w-8 h-8" />
+    </GhostButton>
     {/* regenerate button */}
     <GhostButton
       style={{
@@ -210,13 +216,16 @@ export const Message = ({
       <div className="flex flex-col ml-4 markdown-body w-full">
         {/* space between flex items in row */}
         <div className="flex flex-row justify-between items-center mb-1">
-          <span className="font-bold text-slate-700">{name}</span>
+          <span className="font-bold text-slate-700 text-ellipsis overflow-hidden whitespace-nowrap">
+            {name}
+          </span>
           <div className="flex flex-row justify-center items-center">
             {role === "assistant" && (
               <AssistantButtons
                 leftSibling={leftSibling}
                 rightSibling={rightSibling}
                 busy={busy}
+                onEdit={onEdit}
                 onRegenerate={onRegenerate}
                 setActiveMessage={setActiveMessage}
               />
