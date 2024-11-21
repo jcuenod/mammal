@@ -11,7 +11,12 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./Content.css";
 import { getAll } from "../state/modelProviders";
-import { LeftChevronIcon, RefreshIcon, RightChevronIcon } from "./Icons";
+import {
+  EditIcon,
+  LeftChevronIcon,
+  RefreshIcon,
+  RightChevronIcon,
+} from "./Icons";
 import { UserIcon, AssistantIcon } from "./Icons";
 import MPTreeNode from "../treebeard/src/MPTreeNode";
 import { ModelSettingsContext } from "../state/modelSettingsContext";
@@ -34,7 +39,7 @@ const GhostButton = ({
 }: GhostButtonProps) => (
   <button
     type="button"
-    className="flex justify-center items-center p-1 w-6 h-6 text-slate-600 cursor-pointer disabled:hover:bg-transparent hover:bg-slate-200 hover:text-slate-700 disabled:text-slate-300 rounded"
+    className="flex justify-center items-center p-1 w-6 h-6 text-slate-600 cursor-pointer disabled:hover:bg-transparent hover:bg-slate-200 hover:text-slate-700 disabled:text-slate-300 rounded active:scale-95 "
     style={{ pointerEvents: disabled ? "none" : "auto", ...style }}
     onClick={onClick}
     disabled={disabled}
@@ -63,6 +68,48 @@ const DirectionButton = ({
   );
 };
 
+type UserButtonsProps = {
+  leftSibling?: string;
+  rightSibling?: string;
+  onEdit: () => void;
+  setActiveMessage: (treeId: string) => void;
+};
+const UserButtons = ({
+  leftSibling,
+  rightSibling,
+  onEdit,
+  setActiveMessage,
+}: UserButtonsProps) => (
+  <>
+    {leftSibling || rightSibling ? (
+      <>
+        <DirectionButton
+          disabled={!leftSibling}
+          onClick={() => {
+            if (leftSibling) {
+              setActiveMessage(leftSibling);
+            }
+          }}
+          direction="left"
+        />
+        <DirectionButton
+          disabled={!rightSibling}
+          onClick={() => {
+            if (rightSibling) {
+              setActiveMessage(rightSibling);
+            }
+          }}
+          direction="right"
+        />
+      </>
+    ) : null}
+    {/* regenerate button */}
+    {/* <GhostButton onClick={onEdit}>
+      <EditIcon className="w-8 h-8" />
+    </GhostButton> */}
+  </>
+);
+
 type AssistantButtonsProps = {
   leftSibling?: string;
   rightSibling?: string;
@@ -78,29 +125,31 @@ const AssistantButtons = ({
   setActiveMessage,
 }: AssistantButtonsProps) => (
   <>
-    <DirectionButton
-      disabled={!leftSibling}
-      onClick={() => {
-        if (leftSibling) {
-          setActiveMessage(leftSibling);
-        }
-      }}
-      direction="left"
-    />
-    <DirectionButton
-      disabled={!rightSibling}
-      onClick={() => {
-        if (rightSibling) {
-          setActiveMessage(rightSibling);
-        }
-      }}
-      direction="right"
-    />
+    {leftSibling || rightSibling ? (
+      <>
+        <DirectionButton
+          disabled={!leftSibling}
+          onClick={() => {
+            if (leftSibling) {
+              setActiveMessage(leftSibling);
+            }
+          }}
+          direction="left"
+        />
+        <DirectionButton
+          disabled={!rightSibling}
+          onClick={() => {
+            if (rightSibling) {
+              setActiveMessage(rightSibling);
+            }
+          }}
+          direction="right"
+        />
+      </>
+    ) : null}
     {/* regenerate button */}
     <GhostButton
       style={{
-        transition: "transform 0.5s",
-        transform: "rotate(0deg)",
         transformOrigin: "center",
         animation: busy ? "spin 1s linear infinite" : "none",
       }}
@@ -126,6 +175,7 @@ type MessageProps = {
   busy: boolean;
   markdown: string;
   activeMessage: string | null;
+  onEdit: () => void;
   onRegenerate?: (callback?: (content: string) => void) => void;
   setActiveMessage: (treeId: string) => void;
 };
@@ -137,6 +187,7 @@ const Message = ({
   role,
   busy,
   activeMessage,
+  onEdit,
   onRegenerate,
   setActiveMessage,
 }: MessageProps) => {
@@ -179,6 +230,14 @@ const Message = ({
                 rightSibling={rightSibling}
                 busy={busy}
                 onRegenerate={onRegenerate}
+                setActiveMessage={setActiveMessage}
+              />
+            )}
+            {role === "user" && (
+              <UserButtons
+                leftSibling={leftSibling}
+                rightSibling={rightSibling}
+                onEdit={onEdit}
                 setActiveMessage={setActiveMessage}
               />
             )}
@@ -386,17 +445,14 @@ export const Content = () => {
   };
 
   return (
-    <div className="flex flex-col relative flex-grow h-full">
+    <div className="flex flex-col relative flex-grow h-full bg-slate-100">
       <Navbar
         selectedProviderId={selectedProviderId}
         selectedModelId={selectedModelId}
         selectProvider={selectProvider}
         selectModel={selectModel}
       />
-      <div
-        className="flex flex-col-reverse h-full overflow-auto bg-slate-100"
-        ref={scrollRef}
-      >
+      <div className="flex flex-col-reverse overflow-auto" ref={scrollRef}>
         {/* chat box at the bottom */}
         <Chatbox
           busy={busy}
@@ -407,11 +463,9 @@ export const Content = () => {
         />
 
         {/* message thread (col-reverse) intuitively keeps scrollbar at the bottom */}
-        <div className="p-6 flex flex-col-reverse mb-16">
-          {/* spacer for when there are too few messages to fill the screen */}
-          <div className="flex-grow" />
+        <div className="flex flex-col p-6 mb-16">
           {/* messages */}
-          {[...messages].reverse().map((m) => (
+          {[...messages].map((m) => (
             <Message
               key={m.treeId}
               treeId={m.treeId}
@@ -422,6 +476,9 @@ export const Content = () => {
               markdown={m.message}
               activeMessage={activeMessage}
               setActiveMessage={(treeId) => setActiveMessage(treeId)}
+              onEdit={() => {
+                console.error("onEdit not defined");
+              }}
               onRegenerate={() => {
                 if (m.role === "assistant") {
                   onRegenerate(getParentId(m.treeId));
@@ -433,6 +490,8 @@ export const Content = () => {
               }}
             />
           ))}
+          {/* spacer for when there are too few messages to fill the screen */}
+          <div className="flex-grow" />
         </div>
       </div>
     </div>

@@ -105,7 +105,7 @@ export const Navbar = ({
   }
 
   return (
-    <div className="flex items-center flex-shrink-0 p-4 border-b border-slate-300 space-x-1">
+    <div className="flex items-center flex-shrink-0 p-4 bg-white border-b border-slate-300 space-x-1">
       {modelSelection}
     </div>
   );
