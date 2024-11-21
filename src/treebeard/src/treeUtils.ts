@@ -12,7 +12,7 @@ export const getNextChildPath = async (
     const lastTopLevelPath =
       topLevelNodes.length === 0 ? 0 : parseInt(topLevelNodes[0].path);
     const nextTopLevelPath = (lastTopLevelPath + 1).toString();
-    return nextTopLevelPath;
+    return `${nextTopLevelPath}.1`;
   }
 
   const childNodes = await dbSelect<{ path: string }>(
