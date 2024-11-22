@@ -34,7 +34,6 @@ export const Content = () => {
   } = data;
   const scrollRef = useRef<HTMLDivElement>(null);
   const chatboxRef = useRef<HTMLTextAreaElement>(null);
-  const [textInputValue, setTextInputValue] = useState("");
   const [busy, setBusy] = useState(false);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [selectedProviderId, selectProvider] = useState<number>(0);
@@ -197,14 +196,23 @@ export const Content = () => {
     }
   };
 
-  const onUserAppend = async () => {
-    const message = textInputValue;
-    setTextInputValue("");
-
+  const onUserAppend = async (message: string) => {
     addMessageToParent({
       name: "User",
       role: "user",
       message,
+      parentId: messages[messages.length - 1]?.treeId,
+    });
+  };
+
+  const onAttach = async (message: string) => {
+    await addMessage({
+      data: {
+        name: "User",
+        role: "user",
+        message,
+        createdAt: new Date().toISOString(),
+      },
       parentId: messages[messages.length - 1]?.treeId,
     });
   };
@@ -238,11 +246,10 @@ export const Content = () => {
         {/* chat box at the bottom */}
         <Chatbox
           busy={busy}
-          textInputValue={textInputValue}
-          setTextInputValue={setTextInputValue}
-          onSubmit={onUserAppend}
-          chatboxRef={chatboxRef}
           show={!isEditing}
+          chatboxRef={chatboxRef}
+          onSubmit={onUserAppend}
+          onAttach={onAttach}
         />
 
         {/* message thread (col-reverse) intuitively keeps scrollbar at the bottom */}

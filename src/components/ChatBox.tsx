@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { SendIcon } from "./Icons";
+import { PaperclipIcon, SendIcon } from "./Icons";
+import { open } from "@tauri-apps/plugin-dialog";
+import { invoke } from "@tauri-apps/api/core";
 
 const DEFAULT_HEIGHT = "3.5em";
 
@@ -11,22 +13,35 @@ const debounce = (fn: () => void, ms: number) => {
   };
 };
 
+const getAttachmentTemplate = (filename: string, content: string) => `
+<FILE_ATTACHMENT>
+<FILE_NAME>
+${filename}
+</FILE_NAME>
+<FILE_CONTENT>
+${content}
+</FILE_CONTENT>
+</FILE_ATTACHMENT>
+`;
+
+const readDocument = async (path: string) =>
+  await invoke<string>("read_document", { path });
+
 type ChatboxProps = {
   busy: boolean;
-  textInputValue: string;
-  setTextInputValue: (value: string) => void;
-  onSubmit: () => void;
-  chatboxRef: React.RefObject<HTMLTextAreaElement>;
   show: boolean;
+  chatboxRef: React.RefObject<HTMLTextAreaElement>;
+  onSubmit: (message: string) => void;
+  onAttach: (message: string) => void;
 };
 export const Chatbox = ({
   busy,
-  textInputValue,
-  setTextInputValue,
-  onSubmit,
-  chatboxRef,
   show,
+  chatboxRef,
+  onSubmit,
+  onAttach,
 }: ChatboxProps) => {
+  const [textInputValue, setTextInputValue] = useState("");
   const [focus, setFocus] = useState(false);
   const [height, setHeight] = useState(DEFAULT_HEIGHT);
 
@@ -43,12 +58,14 @@ export const Chatbox = ({
 
   useEffect(fixHeight, [textInputValue]);
 
+  const submitTextInputHandler = () => {
+    onSubmit(textInputValue);
+    setTextInputValue("");
+  };
+
   return (
     <div
-      className={
-        "flex items-center bg-slate-100 m-5 z-10" +
-        (focus ? " shadow-lg" : " shadow-2xl")
-      }
+      className="w-full p-5 flex flex-row items-center space-x-2"
       style={{
         transition: "box-shadow 100ms, transform 150ms",
         position: "absolute",
@@ -58,34 +75,63 @@ export const Chatbox = ({
         transform: show ? "translateY(0)" : "translateY(150%)",
       }}
     >
-      <textarea
-        className="flex-grow pl-6 pr-12 py-4 border-0 bg-white rounded-lg focus:ring-2 focus:ring-blue-600"
-        style={{
-          height,
-          outline: "none",
-        }}
-        onInput={fixHeight}
-        placeholder="Type a message..."
-        value={textInputValue}
-        onChange={(e) => setTextInputValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            onSubmit();
-          }
-        }}
-        onFocus={() => setFocus(true)}
-        onBlur={() => setFocus(false)}
-        ref={chatboxRef}
-      />
-      <button
-        type="button"
-        className="absolute right-0 m-2 flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:bg-blue-100 hover:text-blue-600 active:scale-95"
-        onClick={onSubmit}
-        disabled={busy}
+      <div
+        className={
+          "relative flex-grow flex items-center bg-slate-100 z-10 " +
+          (focus ? "shadow-lg" : "shadow-2xl")
+        }
       >
-        <SendIcon className="w-6 h-6" />
-      </button>
+        <textarea
+          className="flex-grow pl-6 pr-12 py-4 border-0 bg-white rounded-lg focus:ring-2 focus:ring-blue-600"
+          style={{
+            height,
+            outline: "none",
+          }}
+          placeholder="Type a message..."
+          value={textInputValue}
+          onChange={(e) => setTextInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              submitTextInputHandler();
+            }
+          }}
+          onFocus={() => setFocus(true)}
+          onBlur={() => setFocus(false)}
+        />
+        <button
+          type="button"
+          className="absolute right-0 m-2 flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:bg-blue-100 hover:text-blue-600 active:scale-95"
+          onClick={submitTextInputHandler}
+          disabled={busy}
+        >
+          <SendIcon className="w-6 h-6" />
+        </button>
+      </div>
+      <div>
+        <button
+          type="button"
+          className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-300 hover:bg-slate-200 hover:text-slate-600 active:scale-95"
+          onClick={async () => {
+            const file = await open({
+              multiple: false,
+              directory: false,
+              filters: [
+                { name: "Documents (.doc[x])", extensions: ["docx", "doc"] },
+                // { name: "All Files", extensions: ["*"] },
+              ],
+            });
+            if (file) {
+              const doc = await readDocument(file);
+              const message = getAttachmentTemplate(file, doc);
+              onAttach(message);
+            }
+          }}
+          disabled={busy}
+        >
+          <PaperclipIcon className="w-6 h-6" />
+        </button>
+      </div>
     </div>
   );
 };

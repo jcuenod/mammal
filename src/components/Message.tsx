@@ -11,6 +11,7 @@ import {
   LeftChevronIcon,
   RefreshIcon,
   RightChevronIcon,
+  PaperclipIcon,
 } from "./Icons";
 
 type GhostButtonProps = {
@@ -161,6 +162,26 @@ const AssistantButtons = ({
   </>
 );
 
+const AttachmentView = ({ message }: { message: string }) => {
+  const path =
+    message.match(/<FILE_NAME>([\s\S]*?)<\/FILE_NAME>/)?.[1].trim() ||
+    "unknown path";
+  const filename = path?.split("/").pop() || "Filename Unknown";
+  const truncatedPath = path?.length > 50 ? path.slice(0, 50) + "..." : path;
+  return (
+    <div
+      className="flex w-full px-6 py-2 mb-2 bg-white rounded-lg shadow-sm items-center"
+      title={path}
+    >
+      <PaperclipIcon className="w-8 h-8 text-slate-700 mr-4" />
+      <div className="flex flex-col text-ellipsis overflow-hidden whitespace-nowrap">
+        <span className="font-bold text-slate-700">{filename}</span>
+        <span className="text-xs text-slate-400">{truncatedPath}</span>
+      </div>
+    </div>
+  );
+};
+
 type MessageProps = {
   treeId: string;
   getSiblings: (s: boolean) => Promise<MPTreeNode[]>;
@@ -185,6 +206,14 @@ export const Message = ({
   onRegenerate,
   setActiveMessage,
 }: MessageProps) => {
+  // TODO: Better attachment logic
+  const isAttachment =
+    markdown.startsWith("\n<FILE_ATTACHMENT>\n") &&
+    markdown.endsWith("\n</FILE_ATTACHMENT>\n");
+  if (isAttachment) {
+    return <AttachmentView message={markdown} />;
+  }
+
   const [siblings, setSiblings] = useState<MPTreeNode[]>([]);
   useEffect(() => {
     getSiblings(true).then(setSiblings);

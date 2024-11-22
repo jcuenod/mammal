@@ -2,7 +2,15 @@
 
 use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
+use docx_parser::MarkdownDocument;
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
+
+#[tauri::command]
+fn read_document(path: String) -> String {
+    let markdown_doc = MarkdownDocument::from_file(&path);
+    let markdown = markdown_doc.to_markdown(true);
+    markdown
+}
 
 fn main() {
     let migrations = vec![
@@ -69,18 +77,22 @@ fn main() {
         },
     ];
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(
             tauri_plugin_sql::Builder::default()
                 .add_migrations("sqlite:mammal.db", migrations)
                 .build(),
         )
         .plugin(tauri_plugin_cors_fetch::init())
+        .invoke_handler(tauri::generate_handler![read_document])
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
-            window.set_size(tauri::Size::Logical(tauri::LogicalSize {
-                width: 1000.0,
-                height: 600.0,
-            })).unwrap();
+            window
+                .set_size(tauri::Size::Logical(tauri::LogicalSize {
+                    width: 1000.0,
+                    height: 600.0,
+                }))
+                .unwrap();
             Ok(())
         });
     app.run(tauri::generate_context!())
