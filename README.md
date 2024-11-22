@@ -16,9 +16,11 @@ Mammal is an LLM client application that allows users to have chat conversations
 
 # Features
 
-Most of the complicated coding has gone into supporting threaded conversations that allow forking. The LLM called by Mammal can be changed from message to message, and the conversation can be forked into multiple threads.
+**Threads**: Most of the complicated coding has gone into supporting threaded conversations that allow forking. The LLM called by Mammal can be changed from message to message, and the conversation can be forked into multiple threads. There are bugs here that are hard to reproduce, and there's probably a nasty refactor needed to fix them.
 
-It is also possible to search your conversations for specific content. The search functionality is backed by a SQLite's FTS.
+**FTS Search**: It is also possible to search your conversations for specific content. The search functionality is backed by a SQLite's FTS.
+
+**Attachments**: You can attach `.doc(x)` files to conversations. These files are converted to markdown and sent to the LLM as part of the conversation.
 
 # Roadmap (i.e., ideas)
 
@@ -28,7 +30,9 @@ It is also possible to search your conversations for specific content. The searc
   - [ ] Better error handling
   - [ ] Deleting subtrees within threads
   - [ ] Automatic cleaning up of sqlite message tree
+  - [ ] Bug hunting with threads
 - [ ] Automatically downloading list of available models for known providers
+- [ ] Support for more document types (pdf...)
 - [ ] Support for more providers(?)
 - [ ] Pro "workspace" features?
 
