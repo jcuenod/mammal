@@ -31,7 +31,6 @@ type ChatboxProps = {
 };
 export const Chatbox = ({ busy, show, chatboxRef, onSubmit }: ChatboxProps) => {
   const isReadyForDrop = useContext(DropReadyContext);
-  console.log("isReadyForDrop:", isReadyForDrop);
   const [textInputValue, setTextInputValue] = useState("");
   const [focus, setFocus] = useState(false);
   const [height, setHeight] = useState(DEFAULT_HEIGHT);
@@ -106,16 +105,18 @@ export const Chatbox = ({ busy, show, chatboxRef, onSubmit }: ChatboxProps) => {
           className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-300 hover:bg-slate-200 hover:text-slate-600 active:scale-95"
           style={{
             transition: "width 150ms, transform 150ms, opacity 150ms",
-            ...(isReadyForDrop ? {
-              transform: "scale(1)",
-              opacity: "1",
-              pointerEvents: "auto",
-            } : {
-              width: "0px",
-              transform: "scale(0.8)",
-              opacity: "0",
-              pointerEvents: "none",
-            }),
+            ...(isReadyForDrop
+              ? {
+                  transform: "scale(1)",
+                  opacity: "1",
+                  pointerEvents: "auto",
+                }
+              : {
+                  width: "0px",
+                  transform: "scale(0.8)",
+                  opacity: "0",
+                  pointerEvents: "none",
+                }),
           }}
           onClick={async () => {
             const file = await open({

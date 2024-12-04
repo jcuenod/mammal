@@ -13,10 +13,10 @@ const DropReadyContextWrapper = ({
 
   useEffect(() => {
     (async () => {
-      console.log("Initializing Pandoc...");
+      console.log("PANDOC: Initializing...");
       await invoke("init_pandoc");
-      console.log("Pandoc is ready!");
-      setIsReadyForDrop(false);
+      console.log("PANDOC: Ready!");
+      setIsReadyForDrop(true);
     })();
   }, []);
 
