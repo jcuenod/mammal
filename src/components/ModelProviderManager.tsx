@@ -508,8 +508,8 @@ export const ModelProviderManager = ({ open }: ModelProviderManagerProps) => {
               key={provider.id}
               provider={provider}
               setFormState={setFormState}
-              deleteProvider={(providerId) => {
-                const sure = window.confirm(
+              deleteProvider={async (providerId) => {
+                const sure = await window.confirm(
                   "Are you sure you want to delete this provider?"
                 );
                 if (sure === null) return;

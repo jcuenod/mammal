@@ -202,11 +202,11 @@ export const SecondarySidebar = () => {
             onDelete={
               query
                 ? undefined
-                : () => {
-                    const sure = window.confirm(
+                : async () => {
+                    const sure = await window.confirm(
                       "Are you sure you want to delete this entire message thread?"
                     );
-                    if (sure) removeMessageAndDescendants(treeId);
+                    if (sure) {removeMessageAndDescendants(treeId)};
                   }
             }
           />
