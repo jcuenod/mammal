@@ -13,6 +13,7 @@ import {
   RightChevronIcon,
   PaperclipIcon,
 } from "./Icons";
+import { messageIsAttachment } from "../util/attach";
 
 type GhostButtonProps = {
   children: React.ReactNode;
@@ -207,9 +208,7 @@ export const Message = ({
   setActiveMessage,
 }: MessageProps) => {
   // TODO: Better attachment logic
-  const isAttachment =
-    markdown.startsWith("\n<FILE_ATTACHMENT>\n") &&
-    markdown.endsWith("\n</FILE_ATTACHMENT>\n");
+  const isAttachment = messageIsAttachment(markdown);
   if (isAttachment) {
     return <AttachmentView message={markdown} />;
   }

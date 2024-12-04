@@ -1,15 +1,35 @@
+// Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use pandoc_wasm_wrapper::pandoc;
 use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
-use docx_parser::MarkdownDocument;
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
 
 #[tauri::command]
-fn read_document(path: String) -> String {
-    let markdown_doc = MarkdownDocument::from_file(&path);
-    let markdown = markdown_doc.to_markdown(true);
-    markdown
+async fn init_pandoc() {
+    let args: Vec<String> = vec!["--version".to_string()];
+    let input_bytes = vec![];
+    let _ = pandoc(&args, &input_bytes);
+}
+
+fn docx_to_md(path: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let args: Vec<String> = vec!["--from=docx".to_string(), "--to=markdown".to_string()];
+    let input_bytes = std::fs::read(&path)?;
+    pandoc(&args, &input_bytes)
+}
+
+fn get_plain_text(path: &str) -> String {
+    std::fs::read_to_string(&path).unwrap()
+}
+
+#[tauri::command]
+fn get_file(path: String) -> String {
+    let extention = path.split('.').last().unwrap();
+    match extention {
+        "docx" => docx_to_md(&path).unwrap(),
+        "md" | "txt" | "csv" | "json" => get_plain_text(&path),
+        _ => "Unsupported file type".to_string(),
+    }
 }
 
 fn main() {
@@ -84,7 +104,7 @@ fn main() {
                 .build(),
         )
         .plugin(tauri_plugin_cors_fetch::init())
-        .invoke_handler(tauri::generate_handler![read_document])
+        .invoke_handler(tauri::generate_handler![init_pandoc, get_file])
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
             window

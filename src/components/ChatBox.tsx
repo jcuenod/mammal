@@ -1,9 +1,19 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { PaperclipIcon, SendIcon } from "./Icons";
 import { open } from "@tauri-apps/plugin-dialog";
-import { invoke } from "@tauri-apps/api/core";
+import { getAttachmentTemplate, readDocument } from "../util/attach";
+import { DropReadyContext } from "../state/dropReadyContextProvider";
 
 const DEFAULT_HEIGHT = "3.5em";
+const FILE_ATTACHMENT_FILTERS = [
+  {
+    name: "All Supported Files",
+    extensions: ["docx", "txt", "csv", "md", "json"],
+  },
+  { name: "Word Documents", extensions: ["docx"] },
+  { name: "Text Documents", extensions: ["txt", "csv", "md", "json"] },
+  { name: "All Files", extensions: ["*"] },
+];
 
 const debounce = (fn: () => void, ms: number) => {
   let timeout: NodeJS.Timeout;
@@ -13,34 +23,15 @@ const debounce = (fn: () => void, ms: number) => {
   };
 };
 
-const getAttachmentTemplate = (filename: string, content: string) => `
-<FILE_ATTACHMENT>
-<FILE_NAME>
-${filename}
-</FILE_NAME>
-<FILE_CONTENT>
-${content}
-</FILE_CONTENT>
-</FILE_ATTACHMENT>
-`;
-
-const readDocument = async (path: string) =>
-  await invoke<string>("read_document", { path });
-
 type ChatboxProps = {
   busy: boolean;
   show: boolean;
   chatboxRef: React.RefObject<HTMLTextAreaElement>;
-  onSubmit: (message: string) => void;
-  onAttach: (message: string) => void;
+  onSubmit: (message: string) => Promise<void>;
 };
-export const Chatbox = ({
-  busy,
-  show,
-  chatboxRef,
-  onSubmit,
-  onAttach,
-}: ChatboxProps) => {
+export const Chatbox = ({ busy, show, chatboxRef, onSubmit }: ChatboxProps) => {
+  const isReadyForDrop = useContext(DropReadyContext);
+  console.log("isReadyForDrop:", isReadyForDrop);
   const [textInputValue, setTextInputValue] = useState("");
   const [focus, setFocus] = useState(false);
   const [height, setHeight] = useState(DEFAULT_HEIGHT);
@@ -58,9 +49,10 @@ export const Chatbox = ({
 
   useEffect(fixHeight, [textInputValue]);
 
-  const submitTextInputHandler = () => {
-    onSubmit(textInputValue);
+  const submitTextInputHandler = async () => {
+    const trimmed = textInputValue.trim();
     setTextInputValue("");
+    await onSubmit(trimmed);
   };
 
   return (
@@ -112,19 +104,29 @@ export const Chatbox = ({
         <button
           type="button"
           className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-300 hover:bg-slate-200 hover:text-slate-600 active:scale-95"
+          style={{
+            transition: "width 150ms, transform 150ms, opacity 150ms",
+            ...(isReadyForDrop ? {
+              transform: "scale(1)",
+              opacity: "1",
+              pointerEvents: "auto",
+            } : {
+              width: "0px",
+              transform: "scale(0.8)",
+              opacity: "0",
+              pointerEvents: "none",
+            }),
+          }}
           onClick={async () => {
             const file = await open({
               multiple: false,
               directory: false,
-              filters: [
-                { name: "Documents (.doc[x])", extensions: ["docx", "doc"] },
-                // { name: "All Files", extensions: ["*"] },
-              ],
+              filters: FILE_ATTACHMENT_FILTERS,
             });
             if (file) {
               const doc = await readDocument(file);
               const message = getAttachmentTemplate(file, doc);
-              onAttach(message);
+              onSubmit(message);
             }
           }}
           disabled={busy}
