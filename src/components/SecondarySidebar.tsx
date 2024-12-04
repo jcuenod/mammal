@@ -206,7 +206,9 @@ export const SecondarySidebar = () => {
                     const sure = await window.confirm(
                       "Are you sure you want to delete this entire message thread?"
                     );
-                    if (sure) {removeMessageAndDescendants(treeId)};
+                    if (sure) {
+removeMessageAndDescendants(treeId);
+                    }
                   }
             }
           />
