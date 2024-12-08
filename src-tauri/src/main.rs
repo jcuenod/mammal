@@ -5,17 +5,23 @@ use pandoc_wasm_wrapper::pandoc;
 use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
-#[tauri::command]
-async fn init_pandoc() {
+#[tauri::command(async)]
+async fn init_pandoc() -> Result<(), ()> {
     let args: Vec<String> = vec!["--version".to_string()];
     let input_bytes = vec![];
-    let _ = pandoc(&args, &input_bytes);
+    println!("Checking pandoc version");
+    let version = pandoc(&args, &input_bytes).await;
+    println!("Pandoc version: {:?}", version);
+    if version.is_err() {
+        return Err(());
+    }
+    Ok(())
 }
 
-fn docx_to_md(path: &str) -> Result<String, Box<dyn std::error::Error>> {
+async fn docx_to_md(path: &str) -> Result<String, Box<dyn std::error::Error>> {
     let args: Vec<String> = vec!["--from=docx".to_string(), "--to=markdown".to_string()];
     let input_bytes = std::fs::read(&path)?;
-    pandoc(&args, &input_bytes)
+    pandoc(&args, &input_bytes).await
 }
 
 fn get_plain_text(path: &str) -> String {
@@ -23,10 +29,10 @@ fn get_plain_text(path: &str) -> String {
 }
 
 #[tauri::command]
-fn get_file(path: String) -> String {
+async fn get_file(path: String) -> String {
     let extention = path.split('.').last().unwrap();
     match extention {
-        "docx" => docx_to_md(&path).unwrap(),
+        "docx" => docx_to_md(&path).await.unwrap(),
         "md" | "txt" | "csv" | "json" => get_plain_text(&path),
         _ => "Unsupported file type".to_string(),
     }

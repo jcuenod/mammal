@@ -3803,12 +3803,13 @@ dependencies = [
 
 [[package]]
 name = "pandoc-wasm-wrapper"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15b6f0c8e8c4c34a8a8aedaa507bfc13f5111fdd1e1523ddc67def5915864cb3"
+checksum = "da96bfde1560ab2eb5dd595b9975f4edb031418a0c73b77884fcf1ea38043cce"
 dependencies = [
  "once_cell",
  "reqwest 0.12.9",
+ "tokio",
  "wasmer",
  "wasmer-wasix",
 ]
@@ -6311,9 +6312,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.41.1"
+version = "1.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22cfb5bee7a6a52939ca9224d6ac897bb669134078daa8735560897f69de4d33"
+checksum = "5cec9b21b0450273377fc97bd4c33a8acffc8c996c987a7c5b319a0083707551"
 dependencies = [
  "backtrace",
  "bytes",
