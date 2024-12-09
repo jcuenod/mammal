@@ -77,7 +77,7 @@ type SendButtonProps = {
 const SendButton = ({ busy, submitTextInputHandler }: SendButtonProps) => (
   <button
     type="button"
-    className="flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:bg-blue-100 hover:text-blue-600 active:scale-95"
+    className="flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:bg-slate-100 hover:text-blue-600 active:scale-95"
     onClick={submitTextInputHandler}
     disabled={busy}
   >
