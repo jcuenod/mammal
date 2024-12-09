@@ -38,7 +38,6 @@ getCurrentWebview().onDragDropEvent(async (event) => {
 
 export const DropHandler = () => {
   const isReadyForDrop = useContext(DropReadyContext);
-  console.log("isReadyForDrop:", isReadyForDrop);
   const { data } = useContext<MessageStoreContext>(MessageContext);
   const [isDragging, setIsDragging] = useState(false);
   const { messageThread } = data;
@@ -57,8 +56,6 @@ export const DropHandler = () => {
       let parentId: string | undefined =
         messageThread[messageThread.length - 1]?.treeId || undefined;
       for (const file of event.payload.paths) {
-        console.log("parentId:", parentId);
-        console.log("inserting message!");
         const doc = await readDocument(file);
         const message = getAttachmentTemplate(file, doc);
         parentId =
@@ -78,7 +75,6 @@ export const DropHandler = () => {
   // overlay that covers the whole screen
   // box with thick dashed line and big border radius
   // centered text in the middle that says "Drop files here"
-  console.log(isReadyForDrop ? "Attach Files" : "Not Ready");
   return (
     <div
       className="fixed top-0 left-0 w-screen h-screen p-10 bg-gray-500 bg-opacity-50 flex items-center justify-center"
