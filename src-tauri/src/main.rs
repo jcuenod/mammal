@@ -7,11 +7,10 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 
 #[tauri::command(async)]
 async fn init_pandoc() -> Result<(), ()> {
+    // we just use --version as an arg to load the pandoc wasm binary
     let args: Vec<String> = vec!["--version".to_string()];
     let input_bytes = vec![];
-    println!("Checking pandoc version");
     let version = pandoc(&args, &input_bytes).await;
-    println!("Pandoc version: {:?}", version);
     if version.is_err() {
         return Err(());
     }
