@@ -23,6 +23,68 @@ const debounce = (fn: () => void, ms: number) => {
   };
 };
 
+type AttachButtonProps = {
+  busy: boolean;
+  isReadyForDrop: boolean;
+  onSubmit: (message: string) => void;
+};
+const AttachButton = ({
+  busy,
+  isReadyForDrop,
+  onSubmit,
+}: AttachButtonProps) => (
+  <div className="w-10 h-10 flex items-center justify-center">
+    <button
+      type="button"
+      className="text-slate-300 hover:text-slate-600 active:scale-90 active-text-slate-800"
+      style={{
+        transition: "transform 120ms, opacity 120ms",
+        ...(isReadyForDrop
+          ? {
+              // can't include `scale` here because it will override the `active:scale-90` class
+              opacity: "1",
+              pointerEvents: "auto",
+            }
+          : {
+              transform: "scale(0.4)",
+              opacity: "0",
+              pointerEvents: "none",
+            }),
+      }}
+      onClick={async () => {
+        const file = await open({
+          multiple: false,
+          directory: false,
+          filters: FILE_ATTACHMENT_FILTERS,
+        });
+        if (file) {
+          const doc = await readDocument(file);
+          const message = getAttachmentTemplate(file, doc);
+          onSubmit(message);
+        }
+      }}
+      disabled={busy}
+    >
+      <PaperclipIcon className="w-6 h-6" />
+    </button>
+  </div>
+);
+
+type SendButtonProps = {
+  busy: boolean;
+  submitTextInputHandler: () => void;
+};
+const SendButton = ({ busy, submitTextInputHandler }: SendButtonProps) => (
+  <button
+    type="button"
+    className="flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:bg-blue-100 hover:text-blue-600 active:scale-95"
+    onClick={submitTextInputHandler}
+    disabled={busy}
+  >
+    <SendIcon className="w-6 h-6" />
+  </button>
+);
+
 type ChatboxProps = {
   busy: boolean;
   show: boolean;
@@ -56,7 +118,7 @@ export const Chatbox = ({ busy, show, chatboxRef, onSubmit }: ChatboxProps) => {
 
   return (
     <div
-      className="w-full p-5 flex flex-row items-center space-x-2"
+      className="w-full p-4 flex flex-row items-center space-x-2"
       style={{
         transition: "box-shadow 100ms, transform 150ms",
         position: "absolute",
@@ -90,50 +152,17 @@ export const Chatbox = ({ busy, show, chatboxRef, onSubmit }: ChatboxProps) => {
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
         />
-        <button
-          type="button"
-          className="absolute right-0 m-2 flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:bg-blue-100 hover:text-blue-600 active:scale-95"
-          onClick={submitTextInputHandler}
-          disabled={busy}
-        >
-          <SendIcon className="w-6 h-6" />
-        </button>
-      </div>
-      <div>
-        <button
-          type="button"
-          className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-300 hover:bg-slate-200 hover:text-slate-600 active:scale-95"
-          style={{
-            transition: "width 150ms, transform 150ms, opacity 150ms",
-            ...(isReadyForDrop
-              ? {
-                  transform: "scale(1)",
-                  opacity: "1",
-                  pointerEvents: "auto",
-                }
-              : {
-                  width: "0px",
-                  transform: "scale(0.8)",
-                  opacity: "0",
-                  pointerEvents: "none",
-                }),
-          }}
-          onClick={async () => {
-            const file = await open({
-              multiple: false,
-              directory: false,
-              filters: FILE_ATTACHMENT_FILTERS,
-            });
-            if (file) {
-              const doc = await readDocument(file);
-              const message = getAttachmentTemplate(file, doc);
-              onSubmit(message);
-            }
-          }}
-          disabled={busy}
-        >
-          <PaperclipIcon className="w-6 h-6" />
-        </button>
+        <div className="absolute right-0 m-2 flex flex-row">
+          <AttachButton
+            busy={busy}
+            isReadyForDrop={isReadyForDrop}
+            onSubmit={onSubmit}
+          />
+          <SendButton
+            busy={busy}
+            submitTextInputHandler={submitTextInputHandler}
+          />
+        </div>
       </div>
     </div>
   );
