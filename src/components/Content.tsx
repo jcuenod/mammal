@@ -275,7 +275,12 @@ export const Content = () => {
         chatboxRef={chatboxRef}
         onSubmit={onUserAppend}
       />
-      <div className="flex flex-col-reverse overflow-y-scroll" ref={scrollRef}>
+      <div
+        className="flex-grow flex flex-col-reverse overflow-y-scroll"
+        ref={scrollRef}
+      >
+        {/* spacer for when there are too few messages to fill the screen */}
+        <div className="flex-grow" />
         {/* message thread (col-reverse) intuitively keeps scrollbar at the bottom */}
         <div className="flex flex-col p-6 mb-16">
           {/* messages */}
@@ -303,8 +308,6 @@ export const Content = () => {
               }}
             />
           ))}
-          {/* spacer for when there are too few messages to fill the screen */}
-          <div className="flex-grow" />
         </div>
       </div>
       <EditMessageDialog
