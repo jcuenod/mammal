@@ -28,11 +28,11 @@ Mammal is an LLM client application that allows users to have chat conversations
   - [ ] Better support for scrolling to searched messages
   - [ ] Remembering previous model selection
   - [ ] Better error handling
-  - [ ] Deleting subtrees within threads
+  - [x] Deleting subtrees within threads
   - [ ] Automatic cleaning up of sqlite message tree
   - [ ] Bug hunting with threads
 - [ ] Automatically downloading list of available models for known providers
-- [ ] Support for more document types (pdf...)
+- [-] Support for more document types (pdf...)
 - [ ] Support for more providers(?)
 - [ ] Pro "workspace" features?
 
