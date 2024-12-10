@@ -3,6 +3,7 @@ import { ChatMessageRole } from "../state/messageContext";
 import MPTreeNode from "../treebeard/src/MPTreeNode";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import "./Message.css";
 
 import {
   EditIcon,
@@ -249,7 +250,7 @@ export const Message = ({
   return (
     <div
       className={
-        "flex w-full p-6 mb-2 bg-white rounded-lg shadow-sm"
+        "message flex w-full p-6 mb-2 bg-white rounded-lg shadow-sm"
         // + (activeMessage === treeId ? " border-2 border-slate-400" : " border-2 border-white")
       }
     >

@@ -115,6 +115,10 @@ button {
   } */
 /* } */
 
+:root {
+  user-select: none;
+  cursor: default;
+}
 
 .sidebar-link span {
   width: 0px; /* w-16 */
