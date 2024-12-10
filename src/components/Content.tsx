@@ -32,6 +32,7 @@ export const Content = () => {
     threadOpId,
     activeMessage,
     setActiveMessage,
+    removeMessageAndDescendants,
   } = data;
   const scrollRef = useRef<HTMLDivElement>(null);
   const chatboxRef = useRef<HTMLTextAreaElement>(null);
@@ -249,6 +250,16 @@ export const Content = () => {
     });
   };
 
+  const onDeleteMessage = async (treeId: string) => {
+    const sure = await window.confirm(
+      "Are you sure you want to delete this message?"
+    );
+    if (!sure) {
+      return;
+    }
+    removeMessageAndDescendants(treeId);
+  };
+
   return (
     <div className="flex flex-col relative flex-grow h-full overflow-hidden bg-slate-100">
       <Navbar
@@ -257,13 +268,13 @@ export const Content = () => {
         selectProvider={selectProvider}
         selectModel={selectModel}
       />
-        {/* chat box at the bottom */}
-        <Chatbox
-          busy={busy}
-          show={!isEditing}
-          chatboxRef={chatboxRef}
-          onSubmit={onUserAppend}
-        />
+      {/* chat box at the bottom */}
+      <Chatbox
+        busy={busy}
+        show={!isEditing}
+        chatboxRef={chatboxRef}
+        onSubmit={onUserAppend}
+      />
       <div className="flex flex-col-reverse overflow-y-scroll" ref={scrollRef}>
         {/* message thread (col-reverse) intuitively keeps scrollbar at the bottom */}
         <div className="flex flex-col p-6 mb-16">
@@ -279,9 +290,8 @@ export const Content = () => {
               markdown={m.message}
               activeMessage={activeMessage}
               setActiveMessage={(treeId) => setActiveMessage(treeId)}
-              onEdit={() => {
-                setIsEditing(m.treeId);
-              }}
+              onEdit={() => setIsEditing(m.treeId)}
+              onDelete={() => onDeleteMessage(m.treeId)}
               onRegenerate={() => {
                 if (m.role === "assistant") {
                   generateChildFor(getParentId(m.treeId));

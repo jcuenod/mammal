@@ -12,6 +12,7 @@ import {
   RefreshIcon,
   RightChevronIcon,
   PaperclipIcon,
+  Trash2Icon,
 } from "./Icons";
 import { messageIsAttachment } from "../util/attach";
 
@@ -19,24 +20,33 @@ type GhostButtonProps = {
   children: React.ReactNode;
   style?: React.CSSProperties;
   disabled?: boolean;
+  classes?: string;
   onClick?: () => void;
 };
 const GhostButton = ({
   children,
   style,
   disabled,
+  classes,
   onClick,
-}: GhostButtonProps) => (
-  <button
-    type="button"
-    className="flex justify-center items-center p-1 w-6 h-6 text-slate-600 cursor-pointer disabled:hover:bg-transparent hover:bg-slate-200 hover:text-slate-700 disabled:text-slate-300 rounded active:scale-95 active:bg-slate-300 "
-    style={{ pointerEvents: disabled ? "none" : "auto", ...style }}
-    onClick={onClick}
-    disabled={disabled}
-  >
-    {children}
-  </button>
-);
+}: GhostButtonProps) => {
+  const initialClasses =
+    "flex justify-center items-center p-1 w-6 h-6 cursor-pointer disabled:hover:bg-transparent rounded active:scale-90";
+  const additionalClasses =
+    classes ||
+    "active:bg-slate-300 text-slate-600 hover:bg-slate-200 hover:text-slate-700 disabled:text-slate-300";
+  return (
+    <button
+      type="button"
+      className={`${initialClasses} ${additionalClasses}`}
+      style={{ pointerEvents: disabled ? "none" : "auto", ...style }}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {children}
+    </button>
+  );
+};
 
 const DirectionButton = ({
   direction,
@@ -50,9 +60,9 @@ const DirectionButton = ({
   return (
     <GhostButton onClick={onClick} disabled={disabled}>
       {direction === "left" ? (
-        <LeftChevronIcon className="w-6 h-6" />
+        <LeftChevronIcon className="w-4 h-4" />
       ) : (
-        <RightChevronIcon className="w-6 h-6" />
+        <RightChevronIcon className="w-4 h-4" />
       )}
     </GhostButton>
   );
@@ -62,12 +72,14 @@ type UserButtonsProps = {
   leftSibling?: string;
   rightSibling?: string;
   onEdit: () => void;
+  onDelete: () => void;
   setActiveMessage: (treeId: string) => void;
 };
 const UserButtons = ({
   leftSibling,
   rightSibling,
   onEdit,
+  onDelete,
   setActiveMessage,
 }: UserButtonsProps) => (
   <>
@@ -95,7 +107,13 @@ const UserButtons = ({
     ) : null}
     {/* edit button */}
     <GhostButton onClick={onEdit}>
-      <EditIcon className="w-8 h-8" />
+      <EditIcon className="w-6 h-6" />
+    </GhostButton>
+    <GhostButton
+      onClick={onDelete}
+      classes="active:bg-red-300 text-red-600 hover:bg-red-100 hover:text-red-700 disabled:text-red-300"
+    >
+      <Trash2Icon className="w-4 h-4" />
     </GhostButton>
   </>
 );
@@ -141,7 +159,7 @@ const AssistantButtons = ({
     ) : null}
     {/* edit button */}
     <GhostButton onClick={onEdit}>
-      <EditIcon className="w-8 h-8" />
+      <EditIcon className="w-4 h-4" />
     </GhostButton>
     {/* regenerate button */}
     <GhostButton
@@ -158,7 +176,7 @@ const AssistantButtons = ({
         }
       }}
     >
-      <RefreshIcon className="w-8 h-8" />
+      <RefreshIcon className="w-4 h-4" />
     </GhostButton>
   </>
 );
@@ -192,6 +210,7 @@ type MessageProps = {
   markdown: string;
   activeMessage: string | null;
   onEdit: () => void;
+  onDelete: () => void;
   onRegenerate?: (callback?: (content: string) => void) => void;
   setActiveMessage: (treeId: string) => void;
 };
@@ -204,6 +223,7 @@ export const Message = ({
   busy,
   activeMessage,
   onEdit,
+  onDelete,
   onRegenerate,
   setActiveMessage,
 }: MessageProps) => {
@@ -262,6 +282,7 @@ export const Message = ({
               <UserButtons
                 leftSibling={leftSibling}
                 rightSibling={rightSibling}
+                onDelete={onDelete}
                 onEdit={onEdit}
                 setActiveMessage={setActiveMessage}
               />
