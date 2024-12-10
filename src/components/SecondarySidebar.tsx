@@ -5,6 +5,15 @@ import { MessageContext } from "../state/messageContext";
 import type { MessageStoreContext, ChatMessage } from "../state/messageContext";
 import { messageIsAttachment } from "../util/attach";
 
+const hasSharedAncestor = (a: string | null, b: string | null) => {
+  if (a === null || b === null) {
+    return false;
+  }
+  const aParts = a.split(".");
+  const bParts = b.split(".");
+  return aParts?.[0] === bParts?.[0];
+};
+
 const getLabelForAttachmentMessage = (message: string) => {
   const filename =
     message.match(/<FILE_NAME>\n(.*)\n<\/FILE_NAME>/)?.[1].trim() || "unknown";
@@ -70,13 +79,19 @@ const Searchbar = ({ query, setQuery }: SearchbarProps) => (
 );
 
 type LinkProps = {
+  label: string;
+  active: boolean;
   onOpen: () => void;
   onDelete?: () => void;
-  label: string;
 };
-const Link = ({ onOpen, onDelete, label }: LinkProps) => (
+const Link = ({ label, active, onOpen, onDelete }: LinkProps) => (
   <a
-    className="flex items-center flex-shrink-0 h-10 text-sm font-medium rounded hover:bg-slate-200 active:bg-slate-100 group mr-2"
+    className={
+      "flex items-center flex-shrink-0 h-10 text-sm rounded group mr-2 " +
+      (active
+        ? "bg-slate-100 font-bold hover:bg-slate-200 active:bg-slate-100"
+        : "hover:bg-slate-200 active:bg-slate-100")
+    }
     href="#"
     onClick={onOpen}
   >
@@ -150,6 +165,7 @@ export const SecondarySidebar = () => {
     topLevelError: error,
   } = useContext<MessageStoreContext>(MessageContext);
   const {
+    activeMessage,
     topLevelMessages: threadOps,
     setTopLevelMessage,
     setActiveMessage,
@@ -200,13 +216,14 @@ export const SecondarySidebar = () => {
       <div>
         <Searchbar query={query} setQuery={setQuery} />
       </div>
-      <div className="flex-grow overflow-auto relative">
+      <div className="flex-grow overflow-auto relative text-slate-700">
         <ErrorIndicator show={state === "error"} message={error.message} />
         <LoadingIndicator show={state === "loading"} />
         {messageListToUse.map(({ label, treeId }) => (
           <Link
             key={treeId}
             label={label}
+            active={!query && hasSharedAncestor(treeId, activeMessage)}
             onOpen={() => setTopLevelMessage(treeId)}
             onDelete={
               query
