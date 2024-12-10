@@ -13,6 +13,7 @@ import {
   RightChevronIcon,
   PaperclipIcon,
 } from "./Icons";
+import { messageIsAttachment } from "../util/attach";
 
 type GhostButtonProps = {
   children: React.ReactNode;
@@ -166,7 +167,7 @@ const AttachmentView = ({ message }: { message: string }) => {
   const path =
     message.match(/<FILE_NAME>([\s\S]*?)<\/FILE_NAME>/)?.[1].trim() ||
     "unknown path";
-  const filename = path?.split("/").pop() || "Filename Unknown";
+  const filename = path?.split(/\\|\//).pop() || "Filename Unknown";
   const truncatedPath = path?.length > 50 ? path.slice(0, 50) + "..." : path;
   return (
     <div
@@ -207,9 +208,7 @@ export const Message = ({
   setActiveMessage,
 }: MessageProps) => {
   // TODO: Better attachment logic
-  const isAttachment =
-    markdown.startsWith("\n<FILE_ATTACHMENT>\n") &&
-    markdown.endsWith("\n</FILE_ATTACHMENT>\n");
+  const isAttachment = messageIsAttachment(markdown);
   if (isAttachment) {
     return <AttachmentView message={markdown} />;
   }

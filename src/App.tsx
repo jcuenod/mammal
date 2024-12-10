@@ -9,6 +9,8 @@ import ModelProviderContextWrapper from "./state/modelProviders";
 import MessageProviderContextWrapper from "./state/message";
 import "./App.css";
 import ModelSettingsContextWrapper from "./state/modelSettings";
+import { DropHandler } from "./components/DropHandler";
+import DropReadyContextWrapper from "./state/dropReadyContextProvider";
 
 function App() {
   const [modalState, setModalState] = useState<mainViewState>(defaultState);
@@ -31,21 +33,24 @@ function App() {
     <MessageProviderContextWrapper>
       <ModelProviderContextWrapper setHasProviders={setHasProviders}>
         <ModelSettingsContextWrapper>
-          <div className="flex w-screen h-screen text-slate-700">
-            <div className="flex flex-col items-center w-16 min-w-16 pb-4 overflow-auto border-r border-slate-300">
-              <Sidebar
-                state={modalState}
-                setSidebarState={setModalStateAndCheckProviders}
-              />
-            </div>
-            <div className="flex flex-row w-full relative overflow-hidden">
-              <div className="flex flex-col w-80 min-w-80 border-r border-slate-300">
-                <SecondarySidebar />
+          <DropReadyContextWrapper>
+            <div className="flex w-screen h-screen text-slate-700">
+              <div className="flex flex-col items-center w-16 min-w-16 pb-4 overflow-auto border-r border-slate-300">
+                <Sidebar
+                  state={modalState}
+                  setSidebarState={setModalStateAndCheckProviders}
+                />
               </div>
-              <Content />
-              <ModelProviderManager open={modalState === "add-provider"} />
+              <div className="flex flex-row w-full relative overflow-hidden">
+                <div className="flex flex-col w-80 min-w-80 border-r border-slate-300">
+                  <SecondarySidebar />
+                </div>
+                <Content />
+                <ModelProviderManager open={modalState === "add-provider"} />
+              </div>
             </div>
-          </div>
+            <DropHandler />
+          </DropReadyContextWrapper>
         </ModelSettingsContextWrapper>
       </ModelProviderContextWrapper>
     </MessageProviderContextWrapper>

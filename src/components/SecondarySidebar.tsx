@@ -3,6 +3,13 @@ import db from "../state/db";
 import { SearchIcon, XIcon, DeleteIcon } from "./Icons";
 import { MessageContext } from "../state/messageContext";
 import type { MessageStoreContext, ChatMessage } from "../state/messageContext";
+import { messageIsAttachment } from "../util/attach";
+
+const getLabelForAttachmentMessage = (message: string) => {
+  const filename =
+    message.match(/<FILE_NAME>\n(.*)\n<\/FILE_NAME>/)?.[1].trim() || "unknown";
+  return "\u{1F4CE} " + filename;
+};
 
 const getSearchResults = async (query: string) => {
   return (
@@ -183,7 +190,9 @@ export const SecondarySidebar = () => {
       }))
     : threadOps.map((m) => ({
         treeId: m.treeId,
-        label: m.message.slice(0, 50),
+        label: messageIsAttachment(m.message)
+          ? getLabelForAttachmentMessage(m.message)
+          : m.message.slice(0, 50),
       }));
 
   return (
@@ -207,7 +216,7 @@ export const SecondarySidebar = () => {
                       "Are you sure you want to delete this entire message thread?"
                     );
                     if (sure) {
-removeMessageAndDescendants(treeId);
+                      removeMessageAndDescendants(treeId);
                     }
                   }
             }
