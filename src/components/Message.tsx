@@ -250,7 +250,7 @@ export const Message = ({
   return (
     <div
       className={
-        "message flex w-full p-6 mb-2 bg-white rounded-lg shadow-sm"
+        "message flex w-full p-6 mb-2 bg-white rounded-lg shadow-sm group hover:shadow-md"
         // + (activeMessage === treeId ? " border-2 border-slate-400" : " border-2 border-white")
       }
     >
@@ -268,7 +268,7 @@ export const Message = ({
           <span className="font-bold text-slate-700 text-ellipsis overflow-hidden whitespace-nowrap">
             {name}
           </span>
-          <div className="flex flex-row justify-center items-center">
+          <div className="flex flex-row justify-center items-center opacity-30 scale-75 origin-right group-hover:opacity-100 group-hover:scale-100 transition-all transform-gpu">
             {role === "assistant" && (
               <AssistantButtons
                 leftSibling={leftSibling}

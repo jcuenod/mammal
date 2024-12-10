@@ -136,7 +136,7 @@ export const Chatbox = ({ busy, show, chatboxRef, onSubmit }: ChatboxProps) => {
 
   return (
     <div
-      className="p-4 flex flex-row items-center space-x-2"
+      className="p-4 flex flex-row items-center space-x-2 z-10"
       style={{
         transition: "box-shadow 100ms, transform 150ms",
         position: "absolute",
@@ -148,7 +148,7 @@ export const Chatbox = ({ busy, show, chatboxRef, onSubmit }: ChatboxProps) => {
     >
       <div
         className={
-          "relative flex-grow flex items-center bg-transparent z-10 " +
+          "relative flex-grow flex items-center bg-transparent " +
           (focus ? "shadow-lg" : "shadow-2xl")
         }
       >
