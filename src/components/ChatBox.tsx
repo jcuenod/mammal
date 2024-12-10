@@ -153,8 +153,12 @@ export const Chatbox = ({ busy, show, chatboxRef, onSubmit }: ChatboxProps) => {
         }
       >
         <textarea
-          className="flex-grow pl-6 pr-12 py-4 border-0 bg-white rounded-lg focus:ring-2 focus:ring-blue-600"
+          className="flex-grow pl-6 py-4 border-0 bg-white rounded-lg focus:ring-2 focus:ring-blue-600"
           style={{
+            // pr-6 = 1.5rem (is default padding)
+            // pr-12 = 3rem accounts for the send button (w-10 = 2.5rem + mr-2 = 0.5rem)
+            // to account for the attachment button, we need at least 2.5rem more
+            paddingRight: isReadyForDrop ? "5.5rem" : "3rem",
             height,
             outline: "none",
           }}
@@ -171,7 +175,7 @@ export const Chatbox = ({ busy, show, chatboxRef, onSubmit }: ChatboxProps) => {
           onBlur={() => setFocus(false)}
           ref={chatboxRef}
         />
-        <div className="absolute right-0 m-2 flex flex-row">
+        <div className="absolute right-0 top-0 m-2 flex flex-row">
           <AttachButton
             busy={busy}
             isReadyForDrop={isReadyForDrop}
