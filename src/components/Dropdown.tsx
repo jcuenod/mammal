@@ -54,12 +54,15 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
           {label}
         </button>
         <div
-          className="absolute left-0 flex flex-col items-start min-w-40 rounded-md mt-1 p-1 border-2 border-slate-200 bg-white shadow-lg space-y-0.5"
+          className="absolute left-0 flex flex-col items-start min-w-40 rounded-md mt-1 p-1 border-slate-200 bg-white shadow-lg space-y-0.5"
           style={{
+            borderWidth: "1px",
             opacity: isOpen ? 1 : 0,
             pointerEvents: isOpen ? "auto" : "none",
-            transition: "all 60ms ease-in-out",
-            transform: isOpen ? "translateY(0)" : "translateY(20px)",
+            transition: "all 80ms ease-in-out",
+            transform: isOpen
+              ? "translateY(0) scale(1)"
+              : "translateY(2rem) scale(0.95)",
           }}
         >
           {children}
