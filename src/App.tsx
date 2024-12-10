@@ -11,6 +11,8 @@ import "./App.css";
 import ModelSettingsContextWrapper from "./state/modelSettings";
 import { DropHandler } from "./components/DropHandler";
 import DropReadyContextWrapper from "./state/dropReadyContextProvider";
+import { Allotment, LayoutPriority } from "allotment";
+import "allotment/dist/style.css";
 
 function App() {
   const [modalState, setModalState] = useState<mainViewState>(defaultState);
@@ -42,10 +44,19 @@ function App() {
                 />
               </div>
               <div className="flex flex-row w-full relative overflow-hidden">
-                <div className="flex flex-col w-80 min-w-80 border-r border-slate-300">
-                  <SecondarySidebar />
-                </div>
-                <Content />
+                <Allotment>
+                  <Allotment.Pane
+                    preferredSize={"25%"}
+                    minSize={250}
+                    snap={true}
+                    priority={LayoutPriority.Low}
+                  >
+                    <SecondarySidebar />
+                  </Allotment.Pane>
+                  <Allotment.Pane priority={LayoutPriority.High}>
+                    <Content />
+                  </Allotment.Pane>
+                </Allotment>
                 <ModelProviderManager open={modalState === "add-provider"} />
               </div>
             </div>

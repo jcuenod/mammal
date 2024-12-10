@@ -118,6 +118,10 @@ button {
 :root {
   user-select: none;
   cursor: default;
+  
+  /* Allotment: */
+  --focus-border: #1e40af; /* tw: blue-800 */
+  --separator-border: #cbd5e1; /* tw: slate-300 */
 }
 
 .sidebar-link span {

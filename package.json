@@ -16,6 +16,7 @@
     "@tauri-apps/plugin-shell": "^2",
     "@tauri-apps/plugin-sql": "^2.0.1",
     "@types/node": "^22.9.0",
+    "allotment": "^1.20.2",
     "openai": "^4.71.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
