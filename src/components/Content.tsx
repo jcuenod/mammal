@@ -18,6 +18,9 @@ import { messageIsAttachment } from "../util/attach";
 const getParentId = (treeId: string) =>
   treeId.split(".").slice(0, -1).join(".");
 
+const getAncestorsOf = (treeId: string, thread: MessageThread[]) =>
+  thread.filter((m) => treeId.startsWith(m.treeId));
+
 export const Content = () => {
   // const { data, state, error } = useContext<MessageStoreContext>(M3Context);
   const { data } = useContext<MessageStoreContext>(MessageContext);
@@ -41,13 +44,8 @@ export const Content = () => {
   const [selectedProviderId, selectProvider] = useState<number>(0);
   const [selectedModelId, selectModel] = useState<number>(0);
   const [lastMessage, setLastMessage] = useState<MessageThread | null>(null);
-  const islastMessageInThread = thread.find(
-    (m) => m.message === lastMessage?.message
-  );
   const messages = lastMessage
-    ? !islastMessageInThread
-      ? [...thread, lastMessage]
-      : [...thread]
+    ? [...getAncestorsOf(lastMessage.treeId, thread), lastMessage]
     : [...thread];
 
   useEffect(() => {
@@ -91,6 +89,7 @@ export const Content = () => {
   ) =>
     new Promise((resolve, reject) => {
       const author = `${provider.name} (${model.name})`;
+      const tempTreeId = parentId ? `${parentId}.99999` : "99999.1";
       setBusy(true);
 
       getResponse(
@@ -102,7 +101,7 @@ export const Content = () => {
         messages,
         (responseSnapshot) => {
           setLastMessage({
-            treeId: "irrelevant",
+            treeId: tempTreeId,
             role: "assistant",
             name: author,
             createdAt: new Date().toISOString(),
@@ -117,7 +116,7 @@ export const Content = () => {
         },
         async (content) => {
           setLastMessage({
-            treeId: "irrelevant",
+            treeId: tempTreeId,
             role: "assistant",
             name: author,
             createdAt: new Date().toISOString(),
