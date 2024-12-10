@@ -51,7 +51,8 @@ export const getResponse = async ({
         .decode(value)
         .replace(/data: /, "")
         .trim();
-      if (decodedValue === "[DONE]") {
+      // Sometimes we end up with `data: ${messageSnapshot}\n\ndata: [DONE]`, thus the `.endsWith` check.
+      if (decodedValue === "[DONE]" || decodedValue.endsWith("data: [DONE]")) {
         onDone(messageSnapshot);
         break;
       }
