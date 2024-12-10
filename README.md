@@ -20,7 +20,7 @@ Mammal is an LLM client application that allows users to have chat conversations
 
 **FTS Search**: It is also possible to search your conversations for specific content. The search functionality is backed by a SQLite's FTS.
 
-**Attachments**: You can attach `.doc(x)` files to conversations. These files are converted to markdown and sent to the LLM as part of the conversation.
+**Attachments**: You can attach `.doc(x)` files to conversations. These files are converted to markdown and sent to the LLM as part of the conversation. This enables the use of text-only models for document analysis.
 
 # Roadmap (i.e., ideas)
 
