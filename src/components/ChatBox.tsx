@@ -169,6 +169,7 @@ export const Chatbox = ({ busy, show, chatboxRef, onSubmit }: ChatboxProps) => {
           }}
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
+          ref={chatboxRef}
         />
         <div className="absolute right-0 m-2 flex flex-row">
           <AttachButton
