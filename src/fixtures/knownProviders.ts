@@ -34,7 +34,8 @@ export const knownProviders: KnownProvider[] = [
     name: "Groq",
     endpoint: "https://api.groq.com/openai/v1/",
     models: [
-      { name: "Llama 3.1 8B", model: "llama3-8b-8192" },
+      { name: "Llama 3.1 8B", model: "llama-3.1-8b-instant" },
+      { name: "Llama 3.3 70B", model: "llama-3.3-70b-versatile" },
       { name: "Llama 3.1 70B", model: "llama3-70b-8192" },
     ],
   },

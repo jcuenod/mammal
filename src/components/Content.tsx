@@ -13,6 +13,7 @@ import { ModelSettingsContext } from "../state/modelSettingsContext";
 import { Chatbox } from "./ChatBox";
 import { Message } from "./Message";
 import { EditMessageDialog } from "./EditMessageDialog";
+import { messageIsAttachment } from "../util/attach";
 
 const getParentId = (treeId: string) =>
   treeId.split(".").slice(0, -1).join(".");
@@ -74,78 +75,92 @@ export const Content = () => {
     return { provider, model };
   };
 
-  const generateMessageAndAttachToParent = async (
+  const generateMessageAndAttachToParent: (
     provider: { apiKey: string; endpoint: string; name: string },
     model: { model: string; name: string },
     messages: { role: string; content: string }[],
     parentId: string,
     callback?: (content: string) => void
-  ) => {
-    const author = `${provider.name} (${model.name})`;
-    setBusy(true);
+  ) => Promise<string> = async (
+    provider: { apiKey: string; endpoint: string; name: string },
+    model: { model: string; name: string },
+    messages: { role: string; content: string }[],
+    parentId: string,
+    callback?: (content: string) => void
+  ) =>
+    new Promise((resolve, reject) => {
+      const author = `${provider.name} (${model.name})`;
+      setBusy(true);
 
-    getResponse(
-      provider.apiKey,
-      provider.endpoint,
-      model.model,
-      temperature,
-      maxTokens,
-      messages,
-      (responseSnapshot) => {
-        setLastMessage({
-          treeId: "irrelevant",
-          role: "assistant",
-          name: author,
-          createdAt: new Date().toISOString(),
-          message: responseSnapshot,
-          metadata: JSON.stringify({
-            provider: provider.name,
-            model: model.model,
-            temperature,
-          }),
-          getSiblings: () => Promise.resolve([]),
-        });
-      },
-      async (content) => {
-        setLastMessage({
-          treeId: "irrelevant",
-          role: "assistant",
-          name: author,
-          createdAt: new Date().toISOString(),
-          message: content,
-          metadata: JSON.stringify({
-            provider: provider.name,
-            model: model.model,
-            temperature,
-          }),
-          getSiblings: () => Promise.resolve([]),
-        });
-        // const _evenNewerId =
-        await addMessage({
-          data: {
-            name: author,
+      getResponse(
+        provider.apiKey,
+        provider.endpoint,
+        model.model,
+        temperature,
+        maxTokens,
+        messages,
+        (responseSnapshot) => {
+          setLastMessage({
+            treeId: "irrelevant",
             role: "assistant",
-            message: content,
+            name: author,
             createdAt: new Date().toISOString(),
-            metadata: {
+            message: responseSnapshot,
+            metadata: JSON.stringify({
               provider: provider.name,
               model: model.model,
               temperature,
+            }),
+            getSiblings: () => Promise.resolve([]),
+          });
+        },
+        async (content) => {
+          setLastMessage({
+            treeId: "irrelevant",
+            role: "assistant",
+            name: author,
+            createdAt: new Date().toISOString(),
+            message: content,
+            metadata: JSON.stringify({
+              provider: provider.name,
+              model: model.model,
+              temperature,
+            }),
+            getSiblings: () => Promise.resolve([]),
+          });
+          // const _evenNewerId =
+          const newId = await addMessage({
+            data: {
+              name: author,
+              role: "assistant",
+              message: content,
+              createdAt: new Date().toISOString(),
+              metadata: {
+                provider: provider.name,
+                model: model.model,
+                temperature,
+              },
             },
-          },
-          parentId,
-        });
-        // We use a timeout so that the added message has time to enter the context (awaiting only awaits till the message is in the db)
-        setTimeout(() => {
-          setLastMessage(null);
-          setBusy(false);
-          callback?.(content);
-        }, 100);
-      }
-    );
-  };
+            parentId,
+          });
+          if (!newId) {
+            reject("Failed to add message");
+          } else {
+            resolve(newId);
+          }
+          // We use a timeout so that the added message has time to enter the context (awaiting only awaits till the message is in the db)
+          setTimeout(() => {
+            setLastMessage(null);
+            setBusy(false);
+            callback?.(content);
+          }, 100);
+        }
+      );
+    });
 
-  const generateChildFor = async (treeId: string) => {
+  const generateChildFor: (treeId: string) => Promise<string> = async (
+    treeId: string
+  ) => {
     // get message list (as { content, role }) from treebeard using newId
     const newThread = await getThreadToId(treeId);
     const messageMap = newThread.map(({ role, message }) => ({
@@ -158,11 +173,16 @@ export const Content = () => {
       selectedModelId
     );
     if (!providerAndModel) {
-      return;
+      throw new Error("Provider and model not found");
     }
 
     const { provider, model } = providerAndModel;
-    generateMessageAndAttachToParent(provider, model, messageMap, treeId);
+    return await generateMessageAndAttachToParent(
+      provider,
+      model,
+      messageMap,
+      treeId
+    );
   };
 
   const addMessageToParent = async ({
@@ -186,37 +206,32 @@ export const Content = () => {
       parentId,
     });
     if (!newId) {
-      console.error("Failed to add message");
-      return;
+      throw new Error("Failed to add message");
     }
 
     // if role is "user", we want to generate a new assistant message
-    if (role === "user") {
-      generateChildFor(newId);
+    if (role === "user" && !messageIsAttachment(message)) {
+      return await generateChildFor(newId);
+    }
+    return newId;
+  };
+
+  const onUserAppend = async (message: string | string[]) => {
+    const m = messages;
+    let parentId = m[m.length - 1]?.treeId || undefined;
+    const messagesAsArray = Array.isArray(message) ? message : [message];
+    for (const m of messagesAsArray) {
+      parentId =
+        (await addMessageToParent({
+          name: "User",
+          role: "user",
+          message: m,
+          parentId,
+        })) || undefined;
     }
   };
 
-  const onUserAppend = async (message: string) => {
-    addMessageToParent({
-      name: "User",
-      role: "user",
-      message,
-      parentId: messages[messages.length - 1]?.treeId,
-    });
-  };
-
-  const onAttach = async (message: string) => {
-    await addMessage({
-      data: {
-        name: "User",
-        role: "user",
-        message,
-        createdAt: new Date().toISOString(),
-      },
-      parentId: messages[messages.length - 1]?.treeId,
-    });
-  };
-
+  // Editing could happen anywhere in the thread
   const onEditMessage = (treeId: string, message: string) => {
     const parentId = getParentId(treeId);
     const messageToBeEdited = messages.find((m) => m.treeId === treeId);
@@ -249,7 +264,6 @@ export const Content = () => {
           show={!isEditing}
           chatboxRef={chatboxRef}
           onSubmit={onUserAppend}
-          onAttach={onAttach}
         />
 
         {/* message thread (col-reverse) intuitively keeps scrollbar at the bottom */}

@@ -1,9 +1,19 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { PaperclipIcon, SendIcon } from "./Icons";
 import { open } from "@tauri-apps/plugin-dialog";
-import { invoke } from "@tauri-apps/api/core";
+import { getAttachmentTemplate, readDocument } from "../util/attach";
+import { DropReadyContext } from "../state/dropReadyContextProvider";
 
 const DEFAULT_HEIGHT = "3.5em";
+const FILE_ATTACHMENT_FILTERS = [
+  {
+    name: "All Supported Files",
+    extensions: ["docx", "txt", "csv", "md", "json"],
+  },
+  { name: "Word Documents", extensions: ["docx"] },
+  { name: "Text Documents", extensions: ["txt", "csv", "md", "json"] },
+  { name: "All Files", extensions: ["*"] },
+];
 
 const debounce = (fn: () => void, ms: number) => {
   let timeout: NodeJS.Timeout;
@@ -13,34 +23,76 @@ const debounce = (fn: () => void, ms: number) => {
   };
 };
 
-const getAttachmentTemplate = (filename: string, content: string) => `
-<FILE_ATTACHMENT>
-<FILE_NAME>
-${filename}
-</FILE_NAME>
-<FILE_CONTENT>
-${content}
-</FILE_CONTENT>
-</FILE_ATTACHMENT>
-`;
+type AttachButtonProps = {
+  busy: boolean;
+  isReadyForDrop: boolean;
+  onSubmit: (message: string) => void;
+};
+const AttachButton = ({
+  busy,
+  isReadyForDrop,
+  onSubmit,
+}: AttachButtonProps) => (
+  <div className="w-10 h-10 flex items-center justify-center">
+    <button
+      type="button"
+      className="text-slate-300 hover:text-slate-600 active:scale-90 active-text-slate-800"
+      style={{
+        transition: "transform 120ms, opacity 120ms",
+        ...(isReadyForDrop
+          ? {
+              // can't include `scale` here because it will override the `active:scale-90` class
+              opacity: "1",
+              pointerEvents: "auto",
+            }
+          : {
+              transform: "scale(0.4)",
+              opacity: "0",
+              pointerEvents: "none",
+            }),
+      }}
+      onClick={async () => {
+        const file = await open({
+          multiple: false,
+          directory: false,
+          filters: FILE_ATTACHMENT_FILTERS,
+        });
+        if (file) {
+          const doc = await readDocument(file);
+          const message = getAttachmentTemplate(file, doc);
+          onSubmit(message);
+        }
+      }}
+      disabled={busy}
+    >
+      <PaperclipIcon className="w-6 h-6" />
+    </button>
+  </div>
+);
 
-const readDocument = async (path: string) =>
-  await invoke<string>("read_document", { path });
+type SendButtonProps = {
+  busy: boolean;
+  submitTextInputHandler: () => void;
+};
+const SendButton = ({ busy, submitTextInputHandler }: SendButtonProps) => (
+  <button
+    type="button"
+    className="flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:bg-slate-100 hover:text-blue-600 active:scale-95"
+    onClick={submitTextInputHandler}
+    disabled={busy}
+  >
+    <SendIcon className="w-6 h-6" />
+  </button>
+);
 
 type ChatboxProps = {
   busy: boolean;
   show: boolean;
   chatboxRef: React.RefObject<HTMLTextAreaElement>;
-  onSubmit: (message: string) => void;
-  onAttach: (message: string) => void;
+  onSubmit: (message: string) => Promise<void>;
 };
-export const Chatbox = ({
-  busy,
-  show,
-  chatboxRef,
-  onSubmit,
-  onAttach,
-}: ChatboxProps) => {
+export const Chatbox = ({ busy, show, chatboxRef, onSubmit }: ChatboxProps) => {
+  const isReadyForDrop = useContext(DropReadyContext);
   const [textInputValue, setTextInputValue] = useState("");
   const [focus, setFocus] = useState(false);
   const [height, setHeight] = useState(DEFAULT_HEIGHT);
@@ -58,14 +110,15 @@ export const Chatbox = ({
 
   useEffect(fixHeight, [textInputValue]);
 
-  const submitTextInputHandler = () => {
-    onSubmit(textInputValue);
+  const submitTextInputHandler = async () => {
+    const trimmed = textInputValue.trim();
     setTextInputValue("");
+    await onSubmit(trimmed);
   };
 
   return (
     <div
-      className="w-full p-5 flex flex-row items-center space-x-2"
+      className="w-full p-4 flex flex-row items-center space-x-2"
       style={{
         transition: "box-shadow 100ms, transform 150ms",
         position: "absolute",
@@ -99,38 +152,17 @@ export const Chatbox = ({
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
         />
-        <button
-          type="button"
-          className="absolute right-0 m-2 flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:bg-blue-100 hover:text-blue-600 active:scale-95"
-          onClick={submitTextInputHandler}
-          disabled={busy}
-        >
-          <SendIcon className="w-6 h-6" />
-        </button>
-      </div>
-      <div>
-        <button
-          type="button"
-          className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-300 hover:bg-slate-200 hover:text-slate-600 active:scale-95"
-          onClick={async () => {
-            const file = await open({
-              multiple: false,
-              directory: false,
-              filters: [
-                { name: "Documents (.doc[x])", extensions: ["docx", "doc"] },
-                // { name: "All Files", extensions: ["*"] },
-              ],
-            });
-            if (file) {
-              const doc = await readDocument(file);
-              const message = getAttachmentTemplate(file, doc);
-              onAttach(message);
-            }
-          }}
-          disabled={busy}
-        >
-          <PaperclipIcon className="w-6 h-6" />
-        </button>
+        <div className="absolute right-0 m-2 flex flex-row">
+          <AttachButton
+            busy={busy}
+            isReadyForDrop={isReadyForDrop}
+            onSubmit={onSubmit}
+          />
+          <SendButton
+            busy={busy}
+            submitTextInputHandler={submitTextInputHandler}
+          />
+        </div>
       </div>
     </div>
   );

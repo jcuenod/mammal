@@ -25,5 +25,5 @@ serde_json = "1"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 tauri-plugin-cors-fetch = "2.1.1"
 tauri-plugin-dialog = "2"
-docx-parser = "0.1.1"
+pandoc-wasm-wrapper = "0.2.0"
 
