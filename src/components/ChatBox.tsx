@@ -4,6 +4,24 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { getAttachmentTemplate, readDocument } from "../util/attach";
 import { DropReadyContext } from "../state/dropReadyContextProvider";
 
+// Setup CSS Variable: --scrollbar-width
+let scrollbarWidth = 0;
+const scrollDiv = document.createElement("div");
+scrollDiv.style.position = "absolute";
+scrollDiv.style.left = "-9999px";
+scrollDiv.style.width = "100px";
+scrollDiv.style.height = "100px";
+scrollDiv.style.overflow = "scroll";
+
+document.body.appendChild(scrollDiv);
+scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth;
+document.body.removeChild(scrollDiv);
+
+document.documentElement.style.setProperty(
+  "--scrollbar-width",
+  scrollbarWidth + "px"
+);
+
 const DEFAULT_HEIGHT = "3.5em";
 const FILE_ATTACHMENT_FILTERS = [
   {
