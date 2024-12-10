@@ -65,19 +65,19 @@ export const Chatbox = ({
 
   return (
     <div
-      className="w-full p-5 flex flex-row items-center space-x-2"
+      className="p-4 flex flex-row items-center space-x-2"
       style={{
         transition: "box-shadow 100ms, transform 150ms",
         position: "absolute",
         bottom: 0,
-        right: 0,
+        right: "var(--scrollbar-width)",
         left: 0,
         transform: show ? "translateY(0)" : "translateY(150%)",
       }}
     >
       <div
         className={
-          "relative flex-grow flex items-center bg-slate-100 z-10 " +
+          "relative flex-grow flex items-center bg-transparent z-10 " +
           (focus ? "shadow-lg" : "shadow-2xl")
         }
       >

@@ -235,23 +235,21 @@ export const Content = () => {
   };
 
   return (
-    <div className="flex flex-col relative flex-grow h-full bg-slate-100">
+    <div className="flex flex-col relative flex-grow h-full overflow-hidden bg-slate-100">
       <Navbar
         selectedProviderId={selectedProviderId}
         selectedModelId={selectedModelId}
         selectProvider={selectProvider}
         selectModel={selectModel}
       />
-      <div className="flex flex-col-reverse overflow-auto" ref={scrollRef}>
         {/* chat box at the bottom */}
         <Chatbox
           busy={busy}
           show={!isEditing}
           chatboxRef={chatboxRef}
           onSubmit={onUserAppend}
-          onAttach={onAttach}
         />
-
+      <div className="flex flex-col-reverse overflow-y-scroll" ref={scrollRef}>
         {/* message thread (col-reverse) intuitively keeps scrollbar at the bottom */}
         <div className="flex flex-col p-6 mb-16">
           {/* messages */}
