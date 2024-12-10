@@ -148,8 +148,8 @@ export const Chatbox = ({ busy, show, chatboxRef, onSubmit }: ChatboxProps) => {
     >
       <div
         className={
-          "relative flex-grow flex items-center bg-transparent " +
-          (focus ? "shadow-lg" : "shadow-2xl")
+          "relative flex-grow flex items-center bg-transparent transition-shadow " +
+          (focus ? "shadow-lg" : "shadow-2xl hover:shadow-xl")
         }
       >
         <textarea
