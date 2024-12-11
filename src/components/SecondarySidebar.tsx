@@ -54,13 +54,13 @@ const Searchbar = ({ query, setQuery }: SearchbarProps) => (
   <div className="relative">
     <input
       type="text"
-      className="w-full h-10 px-4 mb-4 text-sm border-0 rounded-full bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+      className="w-full h-10 px-4 mb-4 text-sm border-0 rounded-full bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 hover:ring-2 hover:ring-blue-100"
       placeholder="Search..."
       value={query}
       onChange={(e) => setQuery(e.target.value)}
     />
     <button
-      className="absolute w-8 h-8 top-1 right-1 text-slate-500 hover:bg-slate-300 flex items-center justify-center rounded-full active:scale-95"
+      className="absolute w-8 h-8 top-1 right-1 text-slate-600 hover:bg-slate-200 hover:text-slate-900 flex items-center justify-center rounded-full active:scale-95"
       style={{ pointerEvents: query ? "auto" : "none" }}
       onClick={() => setQuery("")}
     >
