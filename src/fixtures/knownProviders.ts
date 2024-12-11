@@ -25,8 +25,9 @@ export const knownProviders: KnownProvider[] = [
     name: "Cerebras",
     endpoint: "https://api.cerebras.ai/v1/",
     models: [
-      { name: "Llama 3.1 8B", model: "llama3.1-8b" },
+      { name: "Llama 3.3 70B", model: "llama-3.3-70b" },
       { name: "Llama 3.1 70B", model: "llama3.1-70b" },
+      { name: "Llama 3.1 8B", model: "llama3.1-8b" },
     ],
   },
   {
@@ -34,9 +35,9 @@ export const knownProviders: KnownProvider[] = [
     name: "Groq",
     endpoint: "https://api.groq.com/openai/v1/",
     models: [
-      { name: "Llama 3.1 8B", model: "llama-3.1-8b-instant" },
       { name: "Llama 3.3 70B", model: "llama-3.3-70b-versatile" },
       { name: "Llama 3.1 70B", model: "llama3-70b-8192" },
+      { name: "Llama 3.1 8B", model: "llama-3.1-8b-instant" },
     ],
   },
   {
@@ -54,12 +55,13 @@ export const knownProviders: KnownProvider[] = [
     name: "Google",
     endpoint: "https://generativelanguage.googleapis.com/v1beta/",
     models: [
+      { name: "Gemini Exp 1206 (Preview)", model: "gemini-exp-1206" },
+      { name: "Gemini 2.0 Flash (Preview)", model: "gemini-2.0-flash-exp" },
       { name: "Gemini 1.5 Pro 002", model: "gemini-1.5-pro-002" },
       { name: "Gemini Pro 1.5", model: "gemini-pro-1.5" },
       { name: "Gemini 1.5 Flash", model: "gemini-1.5-flash" },
       { name: "Gemini 1.5 Flash 002", model: "gemini-1.5-flash-002" },
       { name: "Gemini 1.5 Flash 8B", model: "gemini-1.5-flash-8b" },
-      { name: "Gemini Exp 1114 (Preview)", model: "gemini-exp-1114" },
     ],
   },
 ];
