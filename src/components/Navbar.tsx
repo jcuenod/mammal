@@ -1,21 +1,63 @@
 import { useContext, useEffect } from "react";
 import { ModelProviderContext } from "../state/modelProviderContext";
 import { ComboBox, IconMenu } from "./Dropdown";
-import { SettingsIcon } from "./Icons";
+import { PanelLeftCloseIcon, SettingsIcon } from "./Icons";
 import { ModelSettingsContext } from "../state/modelSettingsContext";
 import { ModelSettingsMenu } from "./ModelSettingsMenu";
+
+const ToggleSidebarButton = ({
+  toggleSidebar,
+  isOpen,
+}: {
+  toggleSidebar: () => void;
+  isOpen: boolean;
+}) => {
+  return (
+    <button
+      className="p-2 rounded-md hover:bg-slate-200 active:scale-95 relative"
+      onClick={toggleSidebar}
+    >
+      <div className="w-6 h-6 relative">
+        <PanelLeftCloseIcon
+          className={`w-full h-full`}
+          style={{
+            opacity: isOpen ? 1 : 0,
+            transform: `rotate(${isOpen ? 0 : 180}deg) scale(${
+              isOpen ? 1 : 0.7
+            })`,
+            transition: "transform 300ms ease-in-out",
+          }}
+        />
+        <PanelLeftCloseIcon
+          className={`w-full h-full absolute top-0 left-0`}
+          style={{
+            opacity: isOpen ? 0 : 1,
+            transform: `rotate(${isOpen ? 360 : 180}deg) scale(${
+              isOpen ? 0.7 : 1
+            })`,
+            transition: "transform 300ms ease-in-out",
+          }}
+        />
+      </div>
+    </button>
+  );
+};
 
 type NavbarProps = {
   selectedProviderId: number;
   selectedModelId: number;
   selectProvider: (selectedProviderId: number) => void;
   selectModel: (selectedModelId: number) => void;
+  sidebarOpen: boolean;
+  toggleSidebar: () => void;
 };
 export const Navbar = ({
   selectedProviderId,
   selectedModelId,
   selectProvider,
   selectModel,
+  sidebarOpen,
+  toggleSidebar,
 }: NavbarProps) => {
   const { providers } = useContext(ModelProviderContext);
   const { temperature, setTemperature, maxTokens, setMaxTokens } =
@@ -105,7 +147,8 @@ export const Navbar = ({
   }
 
   return (
-    <div className="flex items-center flex-shrink-0 p-4 bg-white border-b border-slate-300 space-x-1">
+    <div className="flex items-center flex-shrink-0 p-4 bg-white border-b border-slate-300 text-slate-600 space-x-1">
+      <ToggleSidebarButton toggleSidebar={toggleSidebar} isOpen={sidebarOpen} />
       {modelSelection}
     </div>
   );

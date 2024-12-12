@@ -1,25 +1,32 @@
+import { useState, useRef, useEffect, useContext } from "react";
 import {
   ChatMessageRole,
   MessageContext,
   MessageStoreContext,
   MessageThread,
 } from "../state/messageContext";
+import { getAncestorsOf, getParentId } from "../treebeard/src/treeUtils";
+import { SecondarySidebar } from "../components/SecondarySidebar";
+import { Navbar } from "../components/Navbar";
 import { getResponse } from "../llm";
-import { useState, useRef, useEffect, useContext } from "react";
-import { Navbar } from "./Navbar";
-import "./Content.css";
 import { getAll } from "../state/modelProviders";
 import { ModelSettingsContext } from "../state/modelSettingsContext";
-import { Chatbox } from "./ChatBox";
-import { Message } from "./Message";
-import { EditMessageDialog } from "./EditMessageDialog";
+import { Chatbox } from "../components/ChatBox";
+import { EditMessageDialog } from "../components/EditMessageDialog";
 import { messageIsAttachment } from "../util/attach";
 
-const getParentId = (treeId: string) =>
-  treeId.split(".").slice(0, -1).join(".");
+import "./Content.css";
+import "@shoelace-style/shoelace/dist/themes/light.css";
+import SlSplitPanel from "@shoelace-style/shoelace/dist/react/split-panel/index.js";
+import { MessageThreadView } from "../components/MessageThreadView";
 
-const getAncestorsOf = (treeId: string, thread: MessageThread[]) =>
-  thread.filter((m) => treeId.startsWith(m.treeId));
+const debounce = (fn: (...args: any[]) => void, ms: number) => {
+  let timeout: number;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = window.setTimeout(() => fn(...args), ms);
+  };
+};
 
 export const Content = () => {
   // const { data, state, error } = useContext<MessageStoreContext>(M3Context);
@@ -231,8 +238,7 @@ export const Content = () => {
     }
   };
 
-  // Editing could happen anywhere in the thread
-  const onEditMessage = (treeId: string, message: string) => {
+  const onSubmitEditMessage = (treeId: string, message: string) => {
     const parentId = getParentId(treeId);
     const messageToBeEdited = messages.find((m) => m.treeId === treeId);
 
@@ -259,68 +265,84 @@ export const Content = () => {
     removeMessageAndDescendants(treeId);
   };
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [positionInPixels, setPositionInPixels] = useState(250);
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
   return (
-    <div className="flex flex-col relative flex-grow h-full overflow-hidden bg-slate-100">
-      <Navbar
-        selectedProviderId={selectedProviderId}
-        selectedModelId={selectedModelId}
-        selectProvider={selectProvider}
-        selectModel={selectModel}
-      />
-      {/* chat box at the bottom */}
-      <Chatbox
-        busy={busy}
-        show={!isEditing}
-        chatboxRef={chatboxRef}
-        onSubmit={onUserAppend}
-      />
-      <div
-        className="flex-grow flex flex-col-reverse overflow-y-scroll"
-        ref={scrollRef}
-      >
-        {/* spacer for when there are too few messages to fill the screen */}
-        <div className="flex-grow" />
-        {/* message thread (col-reverse) intuitively keeps scrollbar at the bottom */}
-        <div className="flex flex-col p-6 mb-16">
-          {/* messages */}
-          {[...messages].map((m) => (
-            <Message
-              key={m.treeId}
-              treeId={m.treeId}
-              busy={busy}
-              getSiblings={m.getSiblings}
-              name={m.name}
-              role={m.role as ChatMessageRole}
-              markdown={m.message}
-              activeMessage={activeMessage}
-              setActiveMessage={(treeId) => setActiveMessage(treeId)}
-              onEdit={() => setIsEditing(m.treeId)}
-              onDelete={() => onDeleteMessage(m.treeId)}
-              onRegenerate={() => {
-                if (m.role === "assistant") {
-                  generateChildFor(getParentId(m.treeId));
-                } else {
-                  console.error(
-                    "onRegenerate not defined for user/system messages"
-                  );
-                }
-              }}
-            />
-          ))}
-        </div>
+    <SlSplitPanel
+      style={{
+        // @ts-ignore
+        "--divider-width": "2px",
+        "--divider-hit-area": "20px",
+        width: "100%",
+        cursor: "col-resize",
+        overflow: "hidden",
+      }}
+      snap={"0"}
+      snapThreshold={180}
+      positionInPixels={isSidebarOpen ? positionInPixels : 0}
+      onSlReposition={debounce((e) => {
+        // @ts-ignore (trust me, it does exist)
+        const { positionInPixels } = e.target;
+        if (positionInPixels === 0) {
+          setIsSidebarOpen(false);
+        } else if (positionInPixels > 0) {
+          setIsSidebarOpen(true);
+          setPositionInPixels(positionInPixels);
+        }
+      }, 100)}
+      onDoubleClick={toggleSidebar}
+    >
+      <div slot="start" className="h-full overflow-hidden">
+        <SecondarySidebar />
       </div>
-      <EditMessageDialog
-        show={isEditing !== null}
-        message={messages.find((m) => m.treeId === isEditing)?.message || ""}
-        onEditMessage={(message) => {
-          if (isEditing === null) {
-            return;
-          }
-          onEditMessage(isEditing, message);
-          setIsEditing(null);
-        }}
-        onCancel={() => setIsEditing(null)}
-      />
-    </div>
+      <div slot="divider">
+        {/* unicode three vertical dots */}
+        &#8942;
+      </div>
+      <div
+        className="flex flex-col relative flex-grow h-full overflow-hidden bg-slate-100"
+        slot="end"
+      >
+        <Navbar
+          selectedProviderId={selectedProviderId}
+          selectedModelId={selectedModelId}
+          selectProvider={selectProvider}
+          selectModel={selectModel}
+          toggleSidebar={toggleSidebar}
+          sidebarOpen={isSidebarOpen}
+        />
+        {/* chat box at the bottom */}
+        <Chatbox
+          busy={busy}
+          show={!isEditing}
+          chatboxRef={chatboxRef}
+          onSubmit={onUserAppend}
+        />
+        <MessageThreadView
+          busy={busy}
+          activeMessage={activeMessage}
+          setActiveMessage={setActiveMessage}
+          setIsEditing={setIsEditing}
+          onDeleteMessage={onDeleteMessage}
+          generateChildFor={generateChildFor}
+          messages={messages}
+          ref={scrollRef}
+        />
+        <EditMessageDialog
+          show={isEditing !== null}
+          message={messages.find((m) => m.treeId === isEditing)?.message || ""}
+          onEditMessage={(message) => {
+            if (isEditing === null) {
+              return;
+            }
+            onSubmitEditMessage(isEditing, message);
+            setIsEditing(null);
+          }}
+          onCancel={() => setIsEditing(null)}
+        />
+      </div>
+    </SlSplitPanel>
   );
 };

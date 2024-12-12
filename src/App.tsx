@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { SecondarySidebar } from "./components/SecondarySidebar";
 import { Sidebar } from "./components/Sidebar";
-import { Content } from "./components/Content";
-import { ModelProviderManager } from "./components/ModelProviderManager";
+import { Content } from "./views/Content";
+import { ModelProviderManager } from "./views/ModelProviderManager";
 import { defaultState } from "./components/mainViewState";
 import type { mainViewState } from "./components/mainViewState";
 import ModelProviderContextWrapper from "./state/modelProviders";
@@ -11,8 +10,6 @@ import "./App.css";
 import ModelSettingsContextWrapper from "./state/modelSettings";
 import { DropHandler } from "./components/DropHandler";
 import DropReadyContextWrapper from "./state/dropReadyContextProvider";
-import { Allotment, LayoutPriority } from "allotment";
-import "allotment/dist/style.css";
 
 function App() {
   const [modalState, setModalState] = useState<mainViewState>(defaultState);
@@ -44,19 +41,7 @@ function App() {
                 />
               </div>
               <div className="flex flex-row w-full relative overflow-hidden">
-                <Allotment>
-                  <Allotment.Pane
-                    preferredSize={"25%"}
-                    minSize={250}
-                    snap={true}
-                    priority={LayoutPriority.Low}
-                  >
-                    <SecondarySidebar />
-                  </Allotment.Pane>
-                  <Allotment.Pane priority={LayoutPriority.High}>
-                    <Content />
-                  </Allotment.Pane>
-                </Allotment>
+                <Content />
                 <ModelProviderManager open={modalState === "add-provider"} />
               </div>
             </div>

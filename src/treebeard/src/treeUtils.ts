@@ -1,3 +1,5 @@
+import { MessageThread } from "../../state/messageContext";
+
 export const getNextChildPath = async (
   dbSelect: <T>(query: string, params?: any[]) => Promise<T[]>,
   tableName: string,
@@ -29,3 +31,9 @@ export const getNextChildPath = async (
   const nextChildIndex = lastChildIndex + 1;
   return `${parentPath}.${nextChildIndex}`;
 };
+
+export const getParentId = (treeId: string) =>
+  treeId.split(".").slice(0, -1).join(".");
+
+export const getAncestorsOf = (treeId: string, thread: MessageThread[]) =>
+  thread.filter((m) => treeId.startsWith(m.treeId));

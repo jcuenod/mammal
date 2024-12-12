@@ -12,3 +12,19 @@
 .markdown-body pre>code {
     white-space: pre-wrap;
 }
+
+
+::part(divider) {
+    background-color: #d1d5db;
+    color: #374151;
+    transition: background-color 200ms, color 200ms;
+}
+::part(divider):hover {
+    background-color: #93c5fd;
+    color: #2563eb;
+}
+
+::part(divider):active {
+    background-color: #2563eb;
+    color: #1d4ed8;
+}

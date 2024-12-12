@@ -17,8 +17,8 @@ import type {
 } from "../state/modelProviderContext";
 import { knownProviders } from "../fixtures/knownProviders";
 import { ModelProviderContext } from "../state/modelProviderContext";
-import { EditIcon, PlusIcon, XIcon } from "./Icons";
-import { BotBackground } from "./BotBackground";
+import { EditIcon, PlusIcon, XIcon } from "../components/Icons";
+import { BotBackground } from "../components/BotBackground";
 
 type addProviderHelperFunction = (
   provider: {
