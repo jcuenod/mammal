@@ -2,7 +2,7 @@
 
 Mammal is an LLM client application that allows users to have chat conversations with LLM providers.
 
-![Mammal](./screenshot.png)
+![Mammal](./screenshot.gif)
 
 # Supported Providers
 
