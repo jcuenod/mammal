@@ -5,6 +5,18 @@ use pandoc_wasm_wrapper::pandoc;
 use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
+enum FromType {
+    Docx,
+}
+
+impl FromType {
+    fn to_string(&self) -> String {
+        match self {
+            FromType::Docx => "docx".to_string(),
+        }
+    }
+}
+
 #[tauri::command(async)]
 async fn init_pandoc() -> Result<(), ()> {
     // we just use --version as an arg to load the pandoc wasm binary
@@ -17,8 +29,9 @@ async fn init_pandoc() -> Result<(), ()> {
     Ok(())
 }
 
-async fn docx_to_md(path: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let args: Vec<String> = vec!["--from=docx".to_string(), "--to=markdown".to_string()];
+async fn to_md(from_type: FromType, path: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let from = "--from=".to_string() + &from_type.to_string();
+    let args: Vec<String> = vec![from, "--to=markdown".to_string()];
     let input_bytes = std::fs::read(&path)?;
     pandoc(&args, &input_bytes).await
 }
@@ -31,7 +44,8 @@ fn get_plain_text(path: &str) -> String {
 async fn get_file(path: String) -> String {
     let extention = path.split('.').last().unwrap();
     match extention {
-        "docx" => docx_to_md(&path).await.unwrap(),
+        // "pdf" => from_pdf(&path).await.unwrap(),
+        "docx" => to_md(FromType::Docx, &path).await.unwrap(),
         "md" | "txt" | "csv" | "json" => get_plain_text(&path),
         _ => "Unsupported file type".to_string(),
     }

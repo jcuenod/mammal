@@ -26,9 +26,11 @@ const DEFAULT_HEIGHT = "3.5em";
 const FILE_ATTACHMENT_FILTERS = [
   {
     name: "All Supported Files",
+    // extensions: ["docx", "pdf", "txt", "csv", "md", "json"],
     extensions: ["docx", "txt", "csv", "md", "json"],
   },
   { name: "Word Documents", extensions: ["docx"] },
+  // { name: "PDF Documents", extensions: ["pdf"] },
   { name: "Text Documents", extensions: ["txt", "csv", "md", "json"] },
   { name: "All Files", extensions: ["*"] },
 ];
