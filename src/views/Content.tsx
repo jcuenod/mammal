@@ -276,7 +276,6 @@ export const Content = () => {
         "--divider-width": "2px",
         "--divider-hit-area": "20px",
         width: "100%",
-        cursor: "col-resize",
         overflow: "hidden",
       }}
       snap={"0"}
